@@ -28,6 +28,10 @@ extern "C" {
 ///         + `NULL == hDevice`
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `NULL == phCommandBuffer`
+///     - ::UR_RESULT_ERROR_INVALID_CONTEXT
+///     - ::UR_RESULT_ERROR_INVALID_DEVICE
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferCreateExp(
     ur_context_handle_t hContext, ///< [in] handle of the context object
     ur_device_handle_t hDevice,   ///< [in] handle of the device object
@@ -56,6 +60,7 @@ ur_result_t UR_APICALL urCommandBufferCreateExp(
 ///     - ::UR_RESULT_ERROR_DEVICE_LOST
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `NULL == hCommandBuffer`
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ur_result_t UR_APICALL urCommandBufferRetainExp(
@@ -83,6 +88,7 @@ ur_result_t UR_APICALL urCommandBufferRetainExp(
 ///     - ::UR_RESULT_ERROR_DEVICE_LOST
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `NULL == hCommandBuffer`
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ur_result_t UR_APICALL urCommandBufferReleaseExp(
@@ -110,8 +116,9 @@ ur_result_t UR_APICALL urCommandBufferReleaseExp(
 ///     - ::UR_RESULT_ERROR_DEVICE_LOST
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `NULL == hCommandBuffer`
-///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferFinalizeExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer ///< [in] handle of the command-buffer object
@@ -141,8 +148,17 @@ ur_result_t UR_APICALL urCommandBufferFinalizeExp(
 ///         + `NULL == pGlobalWorkOffset`
 ///         + `NULL == pGlobalWorkSize`
 ///         + `NULL == pLocalWorkSize`
-///         + `NULL == pDependencies`
+///         + `NULL == pSyncPointWaitList`
 ///         + `NULL == pSyncPoint`
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
+///     - ::UR_RESULT_ERROR_INVALID_KERNEL
+///     - ::UR_RESULT_ERROR_INVALID_WORK_DIMENSION
+///     - ::UR_RESULT_ERROR_INVALID_WORK_GROUP_SIZE
+///     - ::UR_RESULT_ERROR_INVALID_VALUE
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP - "`pSyncPointWaitList == NULL && numSyncPointsInWaitList > 0`" - "`pSyncPointWaitList != NULL && numSyncPointsInWaitList == 0`"
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferAppendKernelExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer,         ///< [in] handle of the command-buffer object
@@ -157,7 +173,7 @@ ur_result_t UR_APICALL urCommandBufferAppendKernelExp(
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
-        pDependencies, ///< [in] A list of sync points that this command depends on.
+        pSyncPointWaitList, ///< [in] A list of sync points that this command depends on.
     ur_exp_command_buffer_sync_point_t
         *pSyncPoint ///< [out] sync point associated with this command
     ) try {
@@ -167,9 +183,10 @@ ur_result_t UR_APICALL urCommandBufferAppendKernelExp(
         return UR_RESULT_ERROR_UNINITIALIZED;
     }
 
-    return pfnAppendKernelExp(
-        hCommandBuffer, hKernel, WorkDim, pGlobalWorkOffset, pGlobalWorkSize,
-        pLocalWorkSize, numSyncPointsInWaitList, pDependencies, pSyncPoint);
+    return pfnAppendKernelExp(hCommandBuffer, hKernel, WorkDim,
+                              pGlobalWorkOffset, pGlobalWorkSize,
+                              pLocalWorkSize, numSyncPointsInWaitList,
+                              pSyncPointWaitList, pSyncPoint);
 } catch (...) {
     return exceptionToResult(std::current_exception());
 }
@@ -186,9 +203,18 @@ ur_result_t UR_APICALL urCommandBufferAppendKernelExp(
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `NULL == pDst`
 ///         + `NULL == pSrc`
-///         + `NULL == pDependencies`
+///         + `NULL == pSyncPointWaitList`
 ///         + `NULL == pSyncPoint`
-ur_result_t UR_APICALL urCommandBufferMemcpyUSMExp(
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
+///     - ::UR_RESULT_ERROR_INVALID_SIZE
+///         + `size == 0`
+///         + If `size` is higher than the allocation size of `pSrc` or `pDst`
+///     - ::UR_RESULT_ERROR_INVALID_MEM_OBJECT
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP - "`pSyncPointWaitList == NULL && numSyncPointsInWaitList > 0`" - "`pSyncPointWaitList != NULL && numSyncPointsInWaitList == 0`"
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+ur_result_t UR_APICALL urCommandBufferAppendMemcpyUSMExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer, ///< [in] handle of the command-buffer object.
     void *pDst,         ///< [in] Location the data will be copied to.
@@ -197,18 +223,19 @@ ur_result_t UR_APICALL urCommandBufferMemcpyUSMExp(
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
-        pDependencies, ///< [in] A list of sync points that this command depends on.
+        pSyncPointWaitList, ///< [in] A list of sync points that this command depends on.
     ur_exp_command_buffer_sync_point_t
         *pSyncPoint ///< [out] sync point associated with this command
     ) try {
-    auto pfnMemcpyUSMExp =
-        ur_lib::context->urDdiTable.CommandBufferExp.pfnMemcpyUSMExp;
-    if (nullptr == pfnMemcpyUSMExp) {
+    auto pfnAppendMemcpyUSMExp =
+        ur_lib::context->urDdiTable.CommandBufferExp.pfnAppendMemcpyUSMExp;
+    if (nullptr == pfnAppendMemcpyUSMExp) {
         return UR_RESULT_ERROR_UNINITIALIZED;
     }
 
-    return pfnMemcpyUSMExp(hCommandBuffer, pDst, pSrc, size,
-                           numSyncPointsInWaitList, pDependencies, pSyncPoint);
+    return pfnAppendMemcpyUSMExp(hCommandBuffer, pDst, pSrc, size,
+                                 numSyncPointsInWaitList, pSyncPointWaitList,
+                                 pSyncPoint);
 } catch (...) {
     return exceptionToResult(std::current_exception());
 }
@@ -225,9 +252,15 @@ ur_result_t UR_APICALL urCommandBufferMemcpyUSMExp(
 ///         + `NULL == hSrcMem`
 ///         + `NULL == hDstMem`
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `NULL == pDependencies`
+///         + `NULL == pSyncPointWaitList`
 ///         + `NULL == pSyncPoint`
-ur_result_t UR_APICALL urCommandBufferMembufferCopyExp(
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP - "`pSyncPointWaitList == NULL && numSyncPointsInWaitList > 0`" - "`pSyncPointWaitList != NULL && numSyncPointsInWaitList == 0`"
+///     - ::UR_RESULT_ERROR_INVALID_MEM_OBJECT
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+ur_result_t UR_APICALL urCommandBufferAppendMembufferCopyExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer,      ///< [in] handle of the command-buffer object.
     ur_mem_handle_t hSrcMem, ///< [in] The data to be copied.
@@ -238,19 +271,19 @@ ur_result_t UR_APICALL urCommandBufferMembufferCopyExp(
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
-        pDependencies, ///< [in] A list of sync points that this command depends on.
+        pSyncPointWaitList, ///< [in] A list of sync points that this command depends on.
     ur_exp_command_buffer_sync_point_t
         *pSyncPoint ///< [out] sync point associated with this command
     ) try {
-    auto pfnMembufferCopyExp =
-        ur_lib::context->urDdiTable.CommandBufferExp.pfnMembufferCopyExp;
-    if (nullptr == pfnMembufferCopyExp) {
+    auto pfnAppendMembufferCopyExp =
+        ur_lib::context->urDdiTable.CommandBufferExp.pfnAppendMembufferCopyExp;
+    if (nullptr == pfnAppendMembufferCopyExp) {
         return UR_RESULT_ERROR_UNINITIALIZED;
     }
 
-    return pfnMembufferCopyExp(hCommandBuffer, hSrcMem, hDstMem, srcOffset,
-                               dstOffset, size, numSyncPointsInWaitList,
-                               pDependencies, pSyncPoint);
+    return pfnAppendMembufferCopyExp(
+        hCommandBuffer, hSrcMem, hDstMem, srcOffset, dstOffset, size,
+        numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 } catch (...) {
     return exceptionToResult(std::current_exception());
 }
@@ -267,9 +300,15 @@ ur_result_t UR_APICALL urCommandBufferMembufferCopyExp(
 ///         + `NULL == hSrcMem`
 ///         + `NULL == hDstMem`
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
-///         + `NULL == pDependencies`
+///         + `NULL == pSyncPointWaitList`
 ///         + `NULL == pSyncPoint`
-ur_result_t UR_APICALL urCommandBufferMembufferCopyRectExp(
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP - "`pSyncPointWaitList == NULL && numSyncPointsInWaitList > 0`" - "`pSyncPointWaitList != NULL && numSyncPointsInWaitList == 0`"
+///     - ::UR_RESULT_ERROR_INVALID_MEM_OBJECT
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+ur_result_t UR_APICALL urCommandBufferAppendMembufferCopyRectExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer,      ///< [in] handle of the command-buffer object.
     ur_mem_handle_t hSrcMem, ///< [in] The data to be copied.
@@ -287,20 +326,21 @@ ur_result_t UR_APICALL urCommandBufferMembufferCopyRectExp(
     uint32_t
         numSyncPointsInWaitList, ///< [in] The number of sync points in the provided dependency list.
     const ur_exp_command_buffer_sync_point_t *
-        pDependencies, ///< [in] A list of sync points that this command depends on.
+        pSyncPointWaitList, ///< [in] A list of sync points that this command depends on.
     ur_exp_command_buffer_sync_point_t
         *pSyncPoint ///< [out] sync point associated with this command
     ) try {
-    auto pfnMembufferCopyRectExp =
-        ur_lib::context->urDdiTable.CommandBufferExp.pfnMembufferCopyRectExp;
-    if (nullptr == pfnMembufferCopyRectExp) {
+    auto pfnAppendMembufferCopyRectExp =
+        ur_lib::context->urDdiTable.CommandBufferExp
+            .pfnAppendMembufferCopyRectExp;
+    if (nullptr == pfnAppendMembufferCopyRectExp) {
         return UR_RESULT_ERROR_UNINITIALIZED;
     }
 
-    return pfnMembufferCopyRectExp(
+    return pfnAppendMembufferCopyRectExp(
         hCommandBuffer, hSrcMem, hDstMem, SrcOrigin, DstOrigin, Region,
         SrcRowPitch, SrcSlicePitch, DstRowPitch, DstSlicePitch,
-        numSyncPointsInWaitList, pDependencies, pSyncPoint);
+        numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 } catch (...) {
     return exceptionToResult(std::current_exception());
 }
@@ -315,6 +355,15 @@ ur_result_t UR_APICALL urCommandBufferMembufferCopyRectExp(
 ///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `NULL == hCommandBuffer`
 ///         + `NULL == hQueue`
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP
+///     - ::UR_RESULT_ERROR_INVALID_QUEUE
+///     - ::UR_RESULT_ERROR_INVALID_EVENT
+///     - ::UR_RESULT_ERROR_INVALID_EVENT_WAIT_LIST
+///         + `phEventWaitList == NULL && numEventsInWaitList > 0`
+///         + `phEventWaitList != NULL && numEventsInWaitList == 0`
+///         + If event objects in phEventWaitList are not valid events.
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     ur_exp_command_buffer_handle_t
         hCommandBuffer, ///< [in] handle of the command-buffer object.

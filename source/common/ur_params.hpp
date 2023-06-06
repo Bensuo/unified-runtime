@@ -596,6 +596,14 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_result_t value) {
         os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP";
         break;
 
+    case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP:
+        os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP";
+        break;
+
+    case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP:
+        os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP";
+        break;
+
     case UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE:
         os << "UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE";
         break;
@@ -8162,20 +8170,20 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
         os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_EXP";
         break;
 
-    case UR_FUNCTION_COMMAND_BUFFER_MEMCPY_USM_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_MEMCPY_USM_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_RECT_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_RECT_EXP";
-        break;
-
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP:
         os << "UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP";
         break;
     default:
         os << "unknown enumerator";
@@ -8428,9 +8436,9 @@ operator<<(std::ostream &os,
     os << *(params->pnumSyncPointsInWaitList);
 
     os << ", ";
-    os << ".pDependencies = ";
+    os << ".pSyncPointWaitList = ";
 
-    ur_params::serializePtr(os, *(params->ppDependencies));
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
 
     os << ", ";
     os << ".pSyncPoint = ";
@@ -8440,9 +8448,9 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &
-operator<<(std::ostream &os,
-           const struct ur_command_buffer_memcpy_usm_exp_params_t *params) {
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_memcpy_usm_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -8469,9 +8477,9 @@ operator<<(std::ostream &os,
     os << *(params->pnumSyncPointsInWaitList);
 
     os << ", ";
-    os << ".pDependencies = ";
+    os << ".pSyncPointWaitList = ";
 
-    ur_params::serializePtr(os, *(params->ppDependencies));
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
 
     os << ", ";
     os << ".pSyncPoint = ";
@@ -8481,9 +8489,9 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &
-operator<<(std::ostream &os,
-           const struct ur_command_buffer_membuffer_copy_exp_params_t *params) {
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_membuffer_copy_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -8520,9 +8528,9 @@ operator<<(std::ostream &os,
     os << *(params->pnumSyncPointsInWaitList);
 
     os << ", ";
-    os << ".pDependencies = ";
+    os << ".pSyncPointWaitList = ";
 
-    ur_params::serializePtr(os, *(params->ppDependencies));
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
 
     os << ", ";
     os << ".pSyncPoint = ";
@@ -8534,7 +8542,8 @@ operator<<(std::ostream &os,
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_membuffer_copy_rect_exp_params_t *params) {
+    const struct ur_command_buffer_append_membuffer_copy_rect_exp_params_t
+        *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -8591,9 +8600,9 @@ inline std::ostream &operator<<(
     os << *(params->pnumSyncPointsInWaitList);
 
     os << ", ";
-    os << ".pDependencies = ";
+    os << ".pSyncPointWaitList = ";
 
-    ur_params::serializePtr(os, *(params->ppDependencies));
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
 
     os << ", ";
     os << ".pSyncPoint = ";
@@ -12268,16 +12277,18 @@ inline int serializeFunctionParams(std::ostream &os, uint32_t function,
         os << (const struct ur_command_buffer_append_kernel_exp_params_t *)
                 params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_MEMCPY_USM_EXP: {
-        os << (const struct ur_command_buffer_memcpy_usm_exp_params_t *)params;
-    } break;
-    case UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_EXP: {
-        os << (const struct ur_command_buffer_membuffer_copy_exp_params_t *)
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP: {
+        os << (const struct ur_command_buffer_append_memcpy_usm_exp_params_t *)
                 params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_MEMBUFFER_COPY_RECT_EXP: {
-        os << (const struct ur_command_buffer_membuffer_copy_rect_exp_params_t
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP: {
+        os << (const struct ur_command_buffer_append_membuffer_copy_exp_params_t
                    *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP: {
+        os << (const struct
+               ur_command_buffer_append_membuffer_copy_rect_exp_params_t *)
+                params;
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP: {
         os << (const struct ur_command_buffer_enqueue_exp_params_t *)params;
