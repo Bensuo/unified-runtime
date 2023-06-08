@@ -165,8 +165,6 @@ inline std::ostream &operator<<(std::ostream &os,
                                 const struct ur_rect_offset_t params);
 inline std::ostream &operator<<(std::ostream &os,
                                 const struct ur_rect_region_t params);
-inline std::ostream &
-operator<<(std::ostream &os, const struct ur_exp_command_buffer_desc_t params);
 inline std::ostream &operator<<(std::ostream &os,
                                 enum ur_device_init_flag_t value);
 inline std::ostream &operator<<(std::ostream &os,
@@ -322,6 +320,8 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value);
 inline std::ostream &operator<<(std::ostream &os, enum ur_map_flag_t value);
 inline std::ostream &operator<<(std::ostream &os,
                                 enum ur_usm_migration_flag_t value);
+inline std::ostream &
+operator<<(std::ostream &os, const struct ur_exp_command_buffer_desc_t params);
 
 inline std::ostream &operator<<(std::ostream &os, enum ur_result_t value) {
     switch (value) {
@@ -590,6 +590,14 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_result_t value) {
         os << "UR_RESULT_ERROR_INVALID_USM_SIZE";
         break;
 
+    case UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE:
+        os << "UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE";
+        break;
+
+    case UR_RESULT_ERROR_ADAPTER_SPECIFIC:
+        os << "UR_RESULT_ERROR_ADAPTER_SPECIFIC";
+        break;
+
     case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP:
         os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_EXP";
         break;
@@ -600,14 +608,6 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_result_t value) {
 
     case UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP:
         os << "UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_WAIT_LIST_EXP";
-        break;
-
-    case UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE:
-        os << "UR_RESULT_ERROR_OBJECT_ALLOCATION_FAILURE";
-        break;
-
-    case UR_RESULT_ERROR_ADAPTER_SPECIFIC:
-        os << "UR_RESULT_ERROR_ADAPTER_SPECIFIC";
         break;
 
     case UR_RESULT_ERROR_UNKNOWN:
@@ -975,22 +975,6 @@ inline std::ostream &operator<<(std::ostream &os,
     os << ".depth = ";
 
     os << (params.depth);
-
-    os << "}";
-    return os;
-}
-inline std::ostream &
-operator<<(std::ostream &os, const struct ur_exp_command_buffer_desc_t params) {
-    os << "(struct ur_exp_command_buffer_desc_t){";
-
-    os << ".stype = ";
-
-    os << (params.stype);
-
-    os << ", ";
-    os << ".pNext = ";
-
-    ur_params::serializeStruct(os, (params.pNext));
 
     os << "}";
     return os;
@@ -8124,8 +8108,8 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
         os << "UR_FUNCTION_COMMAND_BUFFER_FINALIZE_EXP";
         break;
 
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_EXP";
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP";
         break;
 
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP:
@@ -8259,6 +8243,22 @@ inline void serializeFlag<ur_usm_migration_flag_t>(std::ostream &os,
     }
 }
 } // namespace ur_params
+inline std::ostream &
+operator<<(std::ostream &os, const struct ur_exp_command_buffer_desc_t params) {
+    os << "(struct ur_exp_command_buffer_desc_t){";
+
+    os << ".stype = ";
+
+    os << (params.stype);
+
+    os << ", ";
+    os << ".pNext = ";
+
+    ur_params::serializeStruct(os, (params.pNext));
+
+    os << "}";
+    return os;
+}
 
 inline std::ostream &operator<<(std::ostream &os,
                                 const struct ur_init_params_t *params) {
@@ -8355,9 +8355,9 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &
-operator<<(std::ostream &os,
-           const struct ur_command_buffer_append_kernel_exp_params_t *params) {
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_kernel_launch_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -8369,9 +8369,9 @@ operator<<(std::ostream &os,
     ur_params::serializePtr(os, *(params->phKernel));
 
     os << ", ";
-    os << ".WorkDim = ";
+    os << ".workDim = ";
 
-    os << *(params->pWorkDim);
+    os << *(params->pworkDim);
 
     os << ", ";
     os << ".pGlobalWorkOffset = ";
@@ -8518,39 +8518,39 @@ inline std::ostream &operator<<(
     ur_params::serializePtr(os, *(params->phDstMem));
 
     os << ", ";
-    os << ".SrcOrigin = ";
+    os << ".srcOrigin = ";
 
-    os << *(params->pSrcOrigin);
-
-    os << ", ";
-    os << ".DstOrigin = ";
-
-    os << *(params->pDstOrigin);
+    os << *(params->psrcOrigin);
 
     os << ", ";
-    os << ".Region = ";
+    os << ".dstOrigin = ";
 
-    os << *(params->pRegion);
-
-    os << ", ";
-    os << ".SrcRowPitch = ";
-
-    os << *(params->pSrcRowPitch);
+    os << *(params->pdstOrigin);
 
     os << ", ";
-    os << ".SrcSlicePitch = ";
+    os << ".region = ";
 
-    os << *(params->pSrcSlicePitch);
-
-    os << ", ";
-    os << ".DstRowPitch = ";
-
-    os << *(params->pDstRowPitch);
+    os << *(params->pregion);
 
     os << ", ";
-    os << ".DstSlicePitch = ";
+    os << ".srcRowPitch = ";
 
-    os << *(params->pDstSlicePitch);
+    os << *(params->psrcRowPitch);
+
+    os << ", ";
+    os << ".srcSlicePitch = ";
+
+    os << *(params->psrcSlicePitch);
+
+    os << ", ";
+    os << ".dstRowPitch = ";
+
+    os << *(params->pdstRowPitch);
+
+    os << ", ";
+    os << ".dstSlicePitch = ";
+
+    os << *(params->pdstSlicePitch);
 
     os << ", ";
     os << ".numSyncPointsInWaitList = ";
@@ -12231,9 +12231,9 @@ inline int serializeFunctionParams(std::ostream &os, uint32_t function,
     case UR_FUNCTION_COMMAND_BUFFER_FINALIZE_EXP: {
         os << (const struct ur_command_buffer_finalize_exp_params_t *)params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_EXP: {
-        os << (const struct ur_command_buffer_append_kernel_exp_params_t *)
-                params;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP: {
+        os << (const struct ur_command_buffer_append_kernel_launch_exp_params_t
+                   *)params;
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP: {
         os << (const struct ur_command_buffer_append_memcpy_usm_exp_params_t *)
