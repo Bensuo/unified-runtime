@@ -8108,8 +8108,20 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
         os << "UR_FUNCTION_COMMAND_BUFFER_FINALIZE_EXP";
         break;
 
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP";
+        break;
+
     case UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP:
         os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP";
         break;
 
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP:
@@ -8126,6 +8138,10 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
 
     case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP:
         os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP";
         break;
     default:
         os << "unknown enumerator";
@@ -8498,6 +8514,99 @@ inline std::ostream &operator<<(
     return os;
 }
 
+inline std::ostream &
+operator<<(std::ostream &os,
+           const struct ur_command_buffer_append_membuffer_write_exp_params_t
+               *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".hBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phBuffer));
+
+    os << ", ";
+    os << ".offset = ";
+
+    os << *(params->poffset);
+
+    os << ", ";
+    os << ".size = ";
+
+    os << *(params->psize);
+
+    os << ", ";
+    os << ".pSrc = ";
+
+    os << *(params->ppSrc);
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_membuffer_read_exp_params_t *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".hBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phBuffer));
+
+    os << ", ";
+    os << ".offset = ";
+
+    os << *(params->poffset);
+
+    os << ", ";
+    os << ".size = ";
+
+    os << *(params->psize);
+
+    os << ", ";
+    os << ".pDst = ";
+
+    os << *(params->ppDst);
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
 inline std::ostream &operator<<(
     std::ostream &os,
     const struct ur_command_buffer_append_membuffer_copy_rect_exp_params_t
@@ -8551,6 +8660,150 @@ inline std::ostream &operator<<(
     os << ".dstSlicePitch = ";
 
     os << *(params->pdstSlicePitch);
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_membuffer_write_rect_exp_params_t
+        *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".hBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phBuffer));
+
+    os << ", ";
+    os << ".bufferOffset = ";
+
+    os << *(params->pbufferOffset);
+
+    os << ", ";
+    os << ".hostOffset = ";
+
+    os << *(params->phostOffset);
+
+    os << ", ";
+    os << ".region = ";
+
+    os << *(params->pregion);
+
+    os << ", ";
+    os << ".bufferRowPitch = ";
+
+    os << *(params->pbufferRowPitch);
+
+    os << ", ";
+    os << ".bufferSlicePitch = ";
+
+    os << *(params->pbufferSlicePitch);
+
+    os << ", ";
+    os << ".hostRowPitch = ";
+
+    os << *(params->phostRowPitch);
+
+    os << ", ";
+    os << ".hostSlicePitch = ";
+
+    os << *(params->phostSlicePitch);
+
+    os << ", ";
+    os << ".pSrc = ";
+
+    os << *(params->ppSrc);
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_membuffer_read_rect_exp_params_t
+        *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".hBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phBuffer));
+
+    os << ", ";
+    os << ".bufferOffset = ";
+
+    os << *(params->pbufferOffset);
+
+    os << ", ";
+    os << ".hostOffset = ";
+
+    os << *(params->phostOffset);
+
+    os << ", ";
+    os << ".region = ";
+
+    os << *(params->pregion);
+
+    os << ", ";
+    os << ".bufferRowPitch = ";
+
+    os << *(params->pbufferRowPitch);
+
+    os << ", ";
+    os << ".bufferSlicePitch = ";
+
+    os << *(params->pbufferSlicePitch);
+
+    os << ", ";
+    os << ".hostRowPitch = ";
+
+    os << *(params->phostRowPitch);
+
+    os << ", ";
+    os << ".hostSlicePitch = ";
+
+    os << *(params->phostSlicePitch);
+
+    os << ", ";
+    os << ".pDst = ";
+
+    os << *(params->ppDst);
 
     os << ", ";
     os << ".numSyncPointsInWaitList = ";
@@ -12243,9 +12496,27 @@ inline int serializeFunctionParams(std::ostream &os, uint32_t function,
         os << (const struct ur_command_buffer_append_membuffer_copy_exp_params_t
                    *)params;
     } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP: {
+        os << (const struct
+               ur_command_buffer_append_membuffer_write_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP: {
+        os << (const struct ur_command_buffer_append_membuffer_read_exp_params_t
+                   *)params;
+    } break;
     case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP: {
         os << (const struct
                ur_command_buffer_append_membuffer_copy_rect_exp_params_t *)
+                params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP: {
+        os << (const struct
+               ur_command_buffer_append_membuffer_write_rect_exp_params_t *)
+                params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP: {
+        os << (const struct
+               ur_command_buffer_append_membuffer_read_rect_exp_params_t *)
                 params;
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP: {
