@@ -376,9 +376,18 @@ etors:
 - name: COMMAND_BUFFER_FINALIZE_EXP
   desc: Enumerator for $xCommandBufferFinalizeExp
   value: '123'
+- name: COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP
+  desc: Enumerator for $xCommandBufferAppendMembufferWriteExp
+  value: '124'
 - name: COMMAND_BUFFER_APPEND_KERNEL_LAUNCH_EXP
   desc: Enumerator for $xCommandBufferAppendKernelLaunchExp
   value: '125'
+- name: COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP
+  desc: Enumerator for $xCommandBufferAppendMembufferReadExp
+  value: '126'
+- name: COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP
+  desc: Enumerator for $xCommandBufferAppendMembufferWriteRectExp
+  value: '127'
 - name: COMMAND_BUFFER_ENQUEUE_EXP
   desc: Enumerator for $xCommandBufferEnqueueExp
   value: '128'
@@ -391,3 +400,6 @@ etors:
 - name: COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP
   desc: Enumerator for $xCommandBufferAppendMembufferCopyRectExp
   value: '131'
+- name: COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP
+  desc: Enumerator for $xCommandBufferAppendMembufferReadRectExp
+  value: '132'
