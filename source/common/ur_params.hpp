@@ -933,18 +933,6 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
         os << "UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP";
         break;
 
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP";
-        break;
-
     case UR_FUNCTION_USM_PITCHED_ALLOC_EXP:
         os << "UR_FUNCTION_USM_PITCHED_ALLOC_EXP";
         break;
@@ -1086,22 +1074,6 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
         os << "UR_FUNCTION_USM_P2P_PEER_ACCESS_GET_INFO_EXP";
         break;
 
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP";
-        break;
-
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP:
-        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP";
-        break;
-
     case UR_FUNCTION_LOADER_CONFIG_CREATE:
         os << "UR_FUNCTION_LOADER_CONFIG_CREATE";
         break;
@@ -1140,6 +1112,42 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
 
     case UR_FUNCTION_ADAPTER_GET_INFO:
         os << "UR_FUNCTION_ADAPTER_GET_INFO";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_MEMCPY_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_MEMCPY_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_FILL_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_FILL_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_RECT_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_RECT_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_RECT_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_RECT_EXP";
+        break;
+
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_FILL_EXP:
+        os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_FILL_EXP";
         break;
     default:
         os << "unknown enumerator";
@@ -10757,7 +10765,7 @@ inline std::ostream &operator<<(
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_append_memcpy_usm_exp_params_t *params) {
+    const struct ur_command_buffer_append_usm_memcpy_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -10798,7 +10806,54 @@ inline std::ostream &operator<<(
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_append_membuffer_copy_exp_params_t *params) {
+    const struct ur_command_buffer_append_usm_fill_exp_params_t *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".pMemory = ";
+
+    ur_params::serializePtr(os, *(params->ppMemory));
+
+    os << ", ";
+    os << ".pPattern = ";
+
+    ur_params::serializePtr(os, *(params->ppPattern));
+
+    os << ", ";
+    os << ".patternSize = ";
+
+    os << *(params->ppatternSize);
+
+    os << ", ";
+    os << ".size = ";
+
+    os << *(params->psize);
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
+inline std::ostream &
+operator<<(std::ostream &os,
+           const struct ur_command_buffer_append_mem_buffer_copy_exp_params_t
+               *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -10849,7 +10904,7 @@ inline std::ostream &operator<<(
 
 inline std::ostream &
 operator<<(std::ostream &os,
-           const struct ur_command_buffer_append_membuffer_write_exp_params_t
+           const struct ur_command_buffer_append_mem_buffer_write_exp_params_t
                *params) {
 
     os << ".hCommandBuffer = ";
@@ -10894,9 +10949,10 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &operator<<(
-    std::ostream &os,
-    const struct ur_command_buffer_append_membuffer_read_exp_params_t *params) {
+inline std::ostream &
+operator<<(std::ostream &os,
+           const struct ur_command_buffer_append_mem_buffer_read_exp_params_t
+               *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -10942,7 +10998,7 @@ inline std::ostream &operator<<(
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_append_membuffer_copy_rect_exp_params_t
+    const struct ur_command_buffer_append_mem_buffer_copy_rect_exp_params_t
         *params) {
 
     os << ".hCommandBuffer = ";
@@ -11014,7 +11070,7 @@ inline std::ostream &operator<<(
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_append_membuffer_write_rect_exp_params_t
+    const struct ur_command_buffer_append_mem_buffer_write_rect_exp_params_t
         *params) {
 
     os << ".hCommandBuffer = ";
@@ -11086,7 +11142,7 @@ inline std::ostream &operator<<(
 
 inline std::ostream &operator<<(
     std::ostream &os,
-    const struct ur_command_buffer_append_membuffer_read_rect_exp_params_t
+    const struct ur_command_buffer_append_mem_buffer_read_rect_exp_params_t
         *params) {
 
     os << ".hCommandBuffer = ";
@@ -11137,6 +11193,58 @@ inline std::ostream &operator<<(
     os << ".pDst = ";
 
     ur_params::serializePtr(os, *(params->ppDst));
+
+    os << ", ";
+    os << ".numSyncPointsInWaitList = ";
+
+    os << *(params->pnumSyncPointsInWaitList);
+
+    os << ", ";
+    os << ".pSyncPointWaitList = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPointWaitList));
+
+    os << ", ";
+    os << ".pSyncPoint = ";
+
+    ur_params::serializePtr(os, *(params->ppSyncPoint));
+
+    return os;
+}
+
+inline std::ostream &
+operator<<(std::ostream &os,
+           const struct ur_command_buffer_append_mem_buffer_fill_exp_params_t
+               *params) {
+
+    os << ".hCommandBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phCommandBuffer));
+
+    os << ", ";
+    os << ".hBuffer = ";
+
+    ur_params::serializePtr(os, *(params->phBuffer));
+
+    os << ", ";
+    os << ".pPattern = ";
+
+    ur_params::serializePtr(os, *(params->ppPattern));
+
+    os << ", ";
+    os << ".patternSize = ";
+
+    os << *(params->ppatternSize);
+
+    os << ", ";
+    os << ".offset = ";
+
+    os << *(params->poffset);
+
+    os << ", ";
+    os << ".size = ";
+
+    os << *(params->psize);
 
     os << ", ";
     os << ".numSyncPointsInWaitList = ";
@@ -15442,36 +15550,44 @@ inline int serializeFunctionParams(std::ostream &os, uint32_t function,
         os << (const struct ur_command_buffer_append_kernel_launch_exp_params_t
                    *)params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMCPY_USM_EXP: {
-        os << (const struct ur_command_buffer_append_memcpy_usm_exp_params_t *)
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_MEMCPY_EXP: {
+        os << (const struct ur_command_buffer_append_usm_memcpy_exp_params_t *)
                 params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_EXP: {
-        os << (const struct ur_command_buffer_append_membuffer_copy_exp_params_t
-                   *)params;
-    } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_EXP: {
-        os << (const struct
-               ur_command_buffer_append_membuffer_write_exp_params_t *)params;
-    } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_EXP: {
-        os << (const struct ur_command_buffer_append_membuffer_read_exp_params_t
-                   *)params;
-    } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_COPY_RECT_EXP: {
-        os << (const struct
-               ur_command_buffer_append_membuffer_copy_rect_exp_params_t *)
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_FILL_EXP: {
+        os << (const struct ur_command_buffer_append_usm_fill_exp_params_t *)
                 params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_WRITE_RECT_EXP: {
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_EXP: {
         os << (const struct
-               ur_command_buffer_append_membuffer_write_rect_exp_params_t *)
+               ur_command_buffer_append_mem_buffer_copy_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_EXP: {
+        os << (const struct
+               ur_command_buffer_append_mem_buffer_write_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_EXP: {
+        os << (const struct
+               ur_command_buffer_append_mem_buffer_read_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_COPY_RECT_EXP: {
+        os << (const struct
+               ur_command_buffer_append_mem_buffer_copy_rect_exp_params_t *)
                 params;
     } break;
-    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEMBUFFER_READ_RECT_EXP: {
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_RECT_EXP: {
         os << (const struct
-               ur_command_buffer_append_membuffer_read_rect_exp_params_t *)
+               ur_command_buffer_append_mem_buffer_write_rect_exp_params_t *)
                 params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_RECT_EXP: {
+        os << (const struct
+               ur_command_buffer_append_mem_buffer_read_rect_exp_params_t *)
+                params;
+    } break;
+    case UR_FUNCTION_COMMAND_BUFFER_APPEND_MEM_BUFFER_FILL_EXP: {
+        os << (const struct
+               ur_command_buffer_append_mem_buffer_fill_exp_params_t *)params;
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP: {
         os << (const struct ur_command_buffer_enqueue_exp_params_t *)params;
