@@ -534,7 +534,12 @@ etors:
   value: '189'
 - name: COMMAND_BUFFER_APPEND_MEM_BUFFER_FILL_EXP
   desc: Enumerator for $xCommandBufferAppendMemBufferFillExp
-  value: '190'
+- name: COMMAND_BUFFER_APPEND_USM_PREFETCH_EXP
+  desc: Enumerator for $xCommandBufferAppendUSMPrefetchExp
+  value: '195'
+- name: COMMAND_BUFFER_APPEND_USM_ADVISE_EXP
+  desc: Enumerator for $xCommandBufferAppendUSMAdviseExp
+  value: '196'
 ---
 type: enum
 desc: Defines structure types

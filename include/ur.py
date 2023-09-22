@@ -198,6 +198,8 @@ class ur_function_v(IntEnum):
     COMMAND_BUFFER_APPEND_MEM_BUFFER_WRITE_RECT_EXP = 188   ## Enumerator for ::urCommandBufferAppendMemBufferWriteRectExp
     COMMAND_BUFFER_APPEND_MEM_BUFFER_READ_RECT_EXP = 189## Enumerator for ::urCommandBufferAppendMemBufferReadRectExp
     COMMAND_BUFFER_APPEND_MEM_BUFFER_FILL_EXP = 190 ## Enumerator for ::urCommandBufferAppendMemBufferFillExp
+    COMMAND_BUFFER_APPEND_USM_PREFETCH_EXP = 195    ## Enumerator for ::urCommandBufferAppendUSMPrefetchExp
+    COMMAND_BUFFER_APPEND_USM_ADVISE_EXP = 196      ## Enumerator for ::urCommandBufferAppendUSMAdviseExp
 
 class ur_function_t(c_int):
     def __str__(self):
@@ -3502,6 +3504,20 @@ else:
     _urCommandBufferAppendMemBufferFillExp_t = CFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, ur_mem_handle_t, c_void_p, c_size_t, c_size_t, c_size_t, c_ulong, POINTER(ur_exp_command_buffer_sync_point_t), POINTER(ur_exp_command_buffer_sync_point_t) )
 
 ###############################################################################
+## @brief Function-pointer for urCommandBufferAppendUSMPrefetchExp
+if __use_win_types:
+    _urCommandBufferAppendUSMPrefetchExp_t = WINFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, c_void_p, c_size_t, ur_usm_migration_flags_t, c_ulong, POINTER(ur_exp_command_buffer_sync_point_t), POINTER(ur_exp_command_buffer_sync_point_t) )
+else:
+    _urCommandBufferAppendUSMPrefetchExp_t = CFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, c_void_p, c_size_t, ur_usm_migration_flags_t, c_ulong, POINTER(ur_exp_command_buffer_sync_point_t), POINTER(ur_exp_command_buffer_sync_point_t) )
+
+###############################################################################
+## @brief Function-pointer for urCommandBufferAppendUSMAdviseExp
+if __use_win_types:
+    _urCommandBufferAppendUSMAdviseExp_t = WINFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, c_void_p, c_size_t, ur_usm_advice_flags_t, POINTER(ur_exp_command_buffer_sync_point_t) )
+else:
+    _urCommandBufferAppendUSMAdviseExp_t = CFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, c_void_p, c_size_t, ur_usm_advice_flags_t, POINTER(ur_exp_command_buffer_sync_point_t) )
+
+###############################################################################
 ## @brief Function-pointer for urCommandBufferEnqueueExp
 if __use_win_types:
     _urCommandBufferEnqueueExp_t = WINFUNCTYPE( ur_result_t, ur_exp_command_buffer_handle_t, ur_queue_handle_t, c_ulong, POINTER(ur_event_handle_t), POINTER(ur_event_handle_t) )
@@ -3527,6 +3543,8 @@ class ur_command_buffer_exp_dditable_t(Structure):
         ("pfnAppendMemBufferWriteRectExp", c_void_p),                   ## _urCommandBufferAppendMemBufferWriteRectExp_t
         ("pfnAppendMemBufferReadRectExp", c_void_p),                    ## _urCommandBufferAppendMemBufferReadRectExp_t
         ("pfnAppendMemBufferFillExp", c_void_p),                        ## _urCommandBufferAppendMemBufferFillExp_t
+        ("pfnAppendUSMPrefetchExp", c_void_p),                          ## _urCommandBufferAppendUSMPrefetchExp_t
+        ("pfnAppendUSMAdviseExp", c_void_p),                            ## _urCommandBufferAppendUSMAdviseExp_t
         ("pfnEnqueueExp", c_void_p)                                     ## _urCommandBufferEnqueueExp_t
     ]
 
@@ -4074,6 +4092,8 @@ class UR_DDI:
         self.urCommandBufferAppendMemBufferWriteRectExp = _urCommandBufferAppendMemBufferWriteRectExp_t(self.__dditable.CommandBufferExp.pfnAppendMemBufferWriteRectExp)
         self.urCommandBufferAppendMemBufferReadRectExp = _urCommandBufferAppendMemBufferReadRectExp_t(self.__dditable.CommandBufferExp.pfnAppendMemBufferReadRectExp)
         self.urCommandBufferAppendMemBufferFillExp = _urCommandBufferAppendMemBufferFillExp_t(self.__dditable.CommandBufferExp.pfnAppendMemBufferFillExp)
+        self.urCommandBufferAppendUSMPrefetchExp = _urCommandBufferAppendUSMPrefetchExp_t(self.__dditable.CommandBufferExp.pfnAppendUSMPrefetchExp)
+        self.urCommandBufferAppendUSMAdviseExp = _urCommandBufferAppendUSMAdviseExp_t(self.__dditable.CommandBufferExp.pfnAppendUSMAdviseExp)
         self.urCommandBufferEnqueueExp = _urCommandBufferEnqueueExp_t(self.__dditable.CommandBufferExp.pfnEnqueueExp)
 
         # call driver to get function pointers
