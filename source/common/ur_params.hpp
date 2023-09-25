@@ -1157,7 +1157,6 @@ inline std::ostream &operator<<(std::ostream &os, enum ur_function_t value) {
     case UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_ADVISE_EXP:
         os << "UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_ADVISE_EXP";
         break;
-
     default:
         os << "unknown enumerator";
         break;
@@ -11273,9 +11272,9 @@ operator<<(std::ostream &os,
     return os;
 }
 
-inline std::ostream &
-operator<<(std::ostream &os, [[maybe_unused]] const struct
-           ur_command_buffer_append_usm_prefetch_exp_params_t *params) {
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_usm_prefetch_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
@@ -11314,9 +11313,9 @@ operator<<(std::ostream &os, [[maybe_unused]] const struct
     return os;
 }
 
-inline std::ostream &
-operator<<(std::ostream &os, [[maybe_unused]] const struct
-           ur_command_buffer_append_usm_advise_exp_params_t *params) {
+inline std::ostream &operator<<(
+    std::ostream &os,
+    const struct ur_command_buffer_append_usm_advise_exp_params_t *params) {
 
     os << ".hCommandBuffer = ";
 
