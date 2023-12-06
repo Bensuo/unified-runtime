@@ -10,6 +10,9 @@
 #include "command_buffer.hpp"
 #include "ur_level_zero.hpp"
 
+#include <chrono>
+#include <iomanip> // std::setprecision
+
 /* Command-buffer Extension
 
   The UR interface for submitting a UR command-buffer takes a list
@@ -748,7 +751,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     ZE2UR_CALL(zeCommandListAppendSignalEvent,
                (WaitCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
   }
-
+  auto SetCommandList1 = std::chrono::high_resolution_clock::now();
   // Execution event for this enqueue of the UR command-buffer
   ur_event_handle_t RetEvent{};
   // Create a command-list to signal RetEvent on completion
@@ -765,14 +768,53 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
                (SignalCommandList->first, RetEvent->ZeEvent, 1,
                 &(CommandBuffer->SignalEvent->ZeEvent)));
   }
+  auto SetCommandList2 = std::chrono::high_resolution_clock::now();
 
   // Execution our command-lists asynchronously
   // TODO Look using a single `zeCommandQueueExecuteCommandLists()` call
   // passing all three command-lists, rather than individual calls which
   // introduces latency.
   UR_CALL(Queue->executeCommandList(WaitCommandList, false, false));
+  auto SubmitPrefix = std::chrono::high_resolution_clock::now();
   UR_CALL(Queue->executeCommandList(CommandListPtr, false, false));
+  auto SubmitMain = std::chrono::high_resolution_clock::now();
   UR_CALL(Queue->executeCommandList(SignalCommandList, false, false));
+
+  auto SubmitSuffix = std::chrono::high_resolution_clock::now();
+
+  double InitDelay = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                         Initialization - StartEnqueue)
+                         .count();
+  double SetCmdList1Delay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SetCommandList1 -
+                                                           Initialization)
+          .count();
+
+  double SetCommandList2Delay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SetCommandList2 -
+                                                           SetCommandList1)
+          .count();
+
+  double SubmitPrefixDelay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SubmitPrefix -
+                                                           SetCommandList2)
+          .count();
+
+  double SubmitMainDelay = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                               SubmitMain - SubmitPrefix)
+                               .count();
+
+  double SubmitSuffixDelay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SubmitSuffix -
+                                                           SubmitMain)
+          .count();
+
+  std::cout << "InitDelay : " << InitDelay << std::endl;
+  std::cout << "SetCmdList1Delay : " << SetCmdList1Delay << std::endl;
+  std::cout << "SetCommandList2Delay : " << SetCommandList2Delay << std::endl;
+  std::cout << "SubmitPrefixDelay : " << SubmitPrefixDelay << std::endl;
+  std::cout << "SubmitMainDelay : " << SubmitMainDelay << std::endl;
+  std::cout << "SubmitSuffixDelay : " << SubmitSuffixDelay << std::endl;
 
   if (Event) {
     *Event = RetEvent;
