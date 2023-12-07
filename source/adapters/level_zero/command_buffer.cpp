@@ -690,6 +690,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     ur_exp_command_buffer_handle_t CommandBuffer, ur_queue_handle_t Queue,
     uint32_t NumEventsInWaitList, const ur_event_handle_t *EventWaitList,
     ur_event_handle_t *Event) {
+  auto StartEnqueue = std::chrono::high_resolution_clock::now();
   // There are issues with immediate command lists so return an error if the
   // queue is in that mode.
   if (Queue->UsingImmCmdLists) {
@@ -721,6 +722,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   // it otherwise calling `executeCommandList` will return early.
   CommandListPtr->second.IsClosed = false;
   CommandListPtr->second.ZeFenceInUse = true;
+
+  auto Initialization = std::chrono::high_resolution_clock::now();
 
   // Create command-list to execute before `CommandListPtr` and will signal
   // when `EventWaitList` dependencies are complete.
