@@ -10,6 +10,14 @@
 #include "command_buffer.hpp"
 #include "ur_level_zero.hpp"
 
+#define PERF_DEBUG false
+#if PERF_DEBUG == true
+#include <chrono>
+#include <iomanip> // std::setprecision
+#endif
+
+#define TRY_BATCH false
+
 /* Command-buffer Extension
 
   The UR interface for submitting a UR command-buffer takes a list
@@ -687,6 +695,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     ur_exp_command_buffer_handle_t CommandBuffer, ur_queue_handle_t Queue,
     uint32_t NumEventsInWaitList, const ur_event_handle_t *EventWaitList,
     ur_event_handle_t *Event) {
+#if PERF_DEBUG == true
+  auto StartEnqueue = std::chrono::high_resolution_clock::now();
+#endif
   // There are issues with immediate command lists so return an error if the
   // queue is in that mode.
   if (Queue->UsingImmCmdLists) {
@@ -700,11 +711,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   uint32_t QueueGroupOrdinal;
   auto &ZeCommandQueue = QGroup.getZeQueue(&QueueGroupOrdinal);
 
-  ze_fence_handle_t ZeFence;
-  ZeStruct<ze_fence_desc_t> ZeFenceDesc;
   ur_command_list_ptr_t CommandListPtr;
 
-  ZE2UR_CALL(zeFenceCreate, (ZeCommandQueue, &ZeFenceDesc, &ZeFence));
   // TODO: Refactor so requiring a map iterator is not required here, currently
   // required for executeCommandList though.
   ZeStruct<ze_command_queue_desc_t> ZeQueueDesc;
@@ -712,17 +720,21 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   CommandListPtr = CommandBuffer->CommandListMap.insert(
       std::pair<ze_command_list_handle_t, ur_command_list_info_t>(
           CommandBuffer->ZeCommandList,
-          {ZeFence, false, false, ZeCommandQueue, ZeQueueDesc}));
+          {nullptr, false, false, ZeCommandQueue, ZeQueueDesc}));
 
   // Previous execution will have closed the command list, we need to reopen
   // it otherwise calling `executeCommandList` will return early.
   CommandListPtr->second.IsClosed = false;
-  CommandListPtr->second.ZeFenceInUse = true;
+  CommandListPtr->second.ZeFenceInUse = false;
 
+#if PERF_DEBUG == true
+  auto Initialization = std::chrono::high_resolution_clock::now();
+#endif
+  
   // Create command-list to execute before `CommandListPtr` and will signal
   // when `EventWaitList` dependencies are complete.
-  ur_command_list_ptr_t WaitCommandList{};
   if (NumEventsInWaitList) {
+    ur_command_list_ptr_t WaitCommandList{};
     _ur_ze_event_list_t TmpWaitList;
     UR_CALL(TmpWaitList.createAndRetainUrZeEventList(
         NumEventsInWaitList, EventWaitList, Queue, UseCopyEngine));
@@ -741,39 +753,68 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
                (WaitCommandList->first, CommandBuffer->WaitEvent->ZeEvent,
                 CommandBuffer->WaitEvent->WaitList.Length,
                 CommandBuffer->WaitEvent->WaitList.ZeEventList));
+    
+    UR_CALL(Queue->executeCommandList(WaitCommandList, false, false));
   } else {
-    UR_CALL(Queue->Context->getAvailableCommandList(Queue, WaitCommandList,
-                                                    false, false));
-
-    ZE2UR_CALL(zeCommandListAppendSignalEvent,
-               (WaitCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
+    ZE2UR_CALL(zeEventHostSignal, (CommandBuffer->WaitEvent->ZeEvent));
   }
+#if PERF_DEBUG == true
+  auto SetCommandList1 = std::chrono::high_resolution_clock::now();
+#endif
 
+#if TRY_BATCH == true
+  UR_CALL(Queue->executeCommandList(CommandListPtr, false, true));
+#else
+  UR_CALL(Queue->executeCommandList(CommandListPtr, false, false));
+#endif
+  
+#if PERF_DEBUG == true
+  auto SubmitMain = std::chrono::high_resolution_clock::now();
+#endif
+  
   // Execution event for this enqueue of the UR command-buffer
   ur_event_handle_t RetEvent{};
   // Create a command-list to signal RetEvent on completion
-  ur_command_list_ptr_t SignalCommandList{};
   if (Event) {
+    ur_command_list_ptr_t SignalCommandList{};
     UR_CALL(Queue->Context->getAvailableCommandList(Queue, SignalCommandList,
                                                     false, false));
-
     UR_CALL(createEventAndAssociateQueue(Queue, &RetEvent,
                                          UR_COMMAND_COMMAND_BUFFER_ENQUEUE_EXP,
                                          SignalCommandList, false));
-
     ZE2UR_CALL(zeCommandListAppendBarrier,
                (SignalCommandList->first, RetEvent->ZeEvent, 1,
                 &(CommandBuffer->SignalEvent->ZeEvent)));
+    UR_CALL(Queue->executeCommandList(SignalCommandList, false, false));
+  } else {
+    ZE2UR_CALL(zeEventHostSignal, (RetEvent->ZeEvent));
   }
+#if PERF_DEBUG == true
+  auto SetCommandList2 = std::chrono::high_resolution_clock::now();
 
-  // Execution our command-lists asynchronously
-  // TODO Look using a single `zeCommandQueueExecuteCommandLists()` call
-  // passing all three command-lists, rather than individual calls which
-  // introduces latency.
-  UR_CALL(Queue->executeCommandList(WaitCommandList, false, false));
-  UR_CALL(Queue->executeCommandList(CommandListPtr, false, false));
-  UR_CALL(Queue->executeCommandList(SignalCommandList, false, false));
+  double InitDelay = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                         Initialization - StartEnqueue)
+                         .count();
+  double SetCmdList1Delay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SetCommandList1 -
+                                                           Initialization)
+          .count();
 
+  double SubmitMainDelay = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                               SubmitMain - SetCommandList1)
+                               .count();
+
+  double SetCommandList2Delay =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(SetCommandList2 -
+                                                           SubmitMain)
+          .count();
+
+  std::cout << "InitDelay : " << InitDelay << std::endl;
+  std::cout << "SetCmdList1Delay : " << SetCmdList1Delay << std::endl;
+  std::cout << "SetCommandList2Delay : " << SetCommandList2Delay << std::endl;
+  std::cout << "SubmitMainDelay : " << SubmitMainDelay << std::endl;
+#endif
+  
   if (Event) {
     *Event = RetEvent;
   }
