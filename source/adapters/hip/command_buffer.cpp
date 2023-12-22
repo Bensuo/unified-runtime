@@ -277,7 +277,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyExp(
 
     UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
         &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
-        &Dst, &Src, size, hipMemcpyDeviceToDevice));
+        Dst, Src, size, hipMemcpyDeviceToDevice));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -314,8 +314,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyRectExp(
         std::get<BufferMem>(hDstMem->Mem).getPtr(hCommandBuffer->Device);
     hipMemcpy3DParms NodeParams = {};
 
-    setCopyRectParams(region, &SrcPtr, hipMemoryTypeDevice, srcOrigin,
-                      srcRowPitch, srcSlicePitch, &DstPtr, hipMemoryTypeDevice,
+    setCopyRectParams(region, SrcPtr, hipMemoryTypeDevice, srcOrigin,
+                      srcRowPitch, srcSlicePitch, DstPtr, hipMemoryTypeDevice,
                       dstOrigin, dstRowPitch, dstSlicePitch, NodeParams);
 
     UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
@@ -355,7 +355,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteExp(
 
     UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
         &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
-        &Dst, pSrc, size, hipMemcpyHostToDevice));
+        Dst, pSrc, size, hipMemcpyHostToDevice));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -389,7 +389,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadExp(
 
     UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
         &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
-        pDst, &Src, size, hipMemcpyDeviceToHost));
+        pDst, Src, size, hipMemcpyDeviceToHost));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -426,7 +426,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteRectExp(
     hipMemcpy3DParms NodeParams = {};
 
     setCopyRectParams(region, pSrc, hipMemoryTypeHost, hostOffset, hostRowPitch,
-                      hostSlicePitch, &DstPtr, hipMemoryTypeDevice,
+                      hostSlicePitch, DstPtr, hipMemoryTypeDevice,
                       bufferOffset, bufferRowPitch, bufferSlicePitch,
                       NodeParams);
 
@@ -468,7 +468,7 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadRectExp(
         std::get<BufferMem>(hBuffer->Mem).getPtr(hCommandBuffer->Device);
     hipMemcpy3DParms NodeParams = {};
 
-    setCopyRectParams(region, &SrcPtr, hipMemoryTypeDevice, bufferOffset,
+    setCopyRectParams(region, SrcPtr, hipMemoryTypeDevice, bufferOffset,
                       bufferRowPitch, bufferSlicePitch, pDst, hipMemoryTypeHost,
                       hostOffset, hostRowPitch, hostSlicePitch, NodeParams);
 
