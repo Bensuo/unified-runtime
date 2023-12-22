@@ -315,8 +315,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   // by default unless user has provided a better number
   size_t ThreadsPerBlock[3] = {32u, 1u, 1u};
   size_t BlocksPerGrid[3] = {1u, 1u, 1u};
-  size_t MaxThreadsPerBlock[3] = {};
-  bool ProvidedLocalWorkGroupSize = (pLocalWorkSize != nullptr);
 
   hipFunction_t HIPFunc = hKernel->get();
   UR_CHECK_ERROR(setKernelParams(hQueue->getContext(), hQueue->getDevice(),
@@ -1656,7 +1654,6 @@ setKernelParams(const ur_context_handle_t Context,
   size_t MaxThreadsPerBlock[3] = {};
   size_t MaxWorkGroupSize = 0u;
   bool ProvidedLocalWorkGroupSize = LocalWorkSize != nullptr;
-  uint32_t LocalSize = Kernel->getLocalSize();
 
   try {
     // Set the active context here as guessLocalWorkSize needs an active context

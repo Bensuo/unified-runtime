@@ -39,10 +39,10 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
   UR_TRACE(urDeviceRelease(Device));
 
   // Release the memory allocated to the HIPGraph
-  hipGraphDestroy(HIPGraph);
+  UR_CHECK_ERROR(hipGraphDestroy(HIPGraph));
 
   // Release the memory allocated to the HIPGraphExec
-  hipGraphExecDestroy(HIPGraphExec);
+  UR_CHECK_ERROR(hipGraphExecDestroy(HIPGraphExec));
 }
 
 /// Helper function for finding the HIP Nodes associated with the
