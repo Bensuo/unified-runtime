@@ -78,33 +78,6 @@ static ur_result_t getNodesFromSyncPoints(
   return UR_RESULT_SUCCESS;
 }
 
-/// Set parameter for General 1D memory copy.
-/// If the source and/or destination is on the device, SrcPtr and/or DstPtr
-/// must be a pointer to a device ptr
-static hipMemcpy3DParms setCopyParams(const void *SrcPtr,
-                                      const hipMemoryType SrcType, void *DstPtr,
-                                      const hipMemoryType DstType,
-                                      size_t Size) {
-  hipMemcpy3DParms Params = {};
-  Params.extent.depth = 1;
-  Params.extent.height = 1;
-  Params.extent.width = Size;
-  Params.srcPtr.ptr = const_cast<void *>(SrcPtr);
-  Params.srcPtr.pitch = Size;
-  Params.srcPtr.xsize = Size;
-  Params.srcPtr.ysize = 1;
-  Params.dstPtr.ptr = DstPtr;
-  Params.dstPtr.pitch = Size;
-  Params.dstPtr.xsize = Size;
-  Params.dstPtr.ysize = 1;
-  Params.kind = (SrcType == hipMemoryTypeDevice
-                     ? (DstType == hipMemoryTypeDevice ? hipMemcpyDeviceToDevice
-                                                       : hipMemcpyDeviceToHost)
-                     : (DstType == hipMemoryTypeDevice ? hipMemcpyHostToDevice
-                                                       : hipMemcpyHostToHost));
-  return Params;
-}
-
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferCreateExp(
     ur_context_handle_t hContext, ur_device_handle_t hDevice,
     const ur_exp_command_buffer_desc_t *pCommandBufferDesc,
@@ -260,12 +233,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMMemcpyExp(
   }
 
   try {
-    hipMemcpy3DParms NodeParams =
-        setCopyParams(pSrc, hipMemoryTypeHost, pDst, hipMemoryTypeHost, size);
-
-    UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
-                                         DepsList.data(), DepsList.size(),
-                                         &NodeParams));
+    UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
+        &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
+        pDst, pSrc, size, hipMemcpyHostToHost));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -305,12 +275,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferCopyExp(
     auto Dst = std::get<BufferMem>(hDstMem->Mem)
                    .getPtrWithOffset(hCommandBuffer->Device, dstOffset);
 
-    hipMemcpy3DParms NodeParams = setCopyParams(&Src, hipMemoryTypeDevice, &Dst,
-                                                hipMemoryTypeDevice, size);
-
-    UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
-                                         DepsList.data(), DepsList.size(),
-                                         &NodeParams));
+    UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
+        &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
+        &Dst, &Src, size, hipMemcpyDeviceToDevice));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -386,12 +353,9 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteExp(
     auto Dst = std::get<BufferMem>(hBuffer->Mem)
                    .getPtrWithOffset(hCommandBuffer->Device, offset);
 
-    hipMemcpy3DParms NodeParams =
-        setCopyParams(pSrc, hipMemoryTypeHost, &Dst, hipMemoryTypeDevice, size);
-
-    UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
-                                         DepsList.data(), DepsList.size(),
-                                         &NodeParams));
+    UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
+        &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
+        &Dst, pSrc, size, hipMemcpyHostToDevice));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
@@ -423,12 +387,9 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadExp(
     auto Src = std::get<BufferMem>(hBuffer->Mem)
                    .getPtrWithOffset(hCommandBuffer->Device, offset);
 
-    hipMemcpy3DParms NodeParams =
-        setCopyParams(&Src, hipMemoryTypeDevice, pDst, hipMemoryTypeHost, size);
-
-    UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
-                                         DepsList.data(), DepsList.size(),
-                                         &NodeParams));
+    UR_CHECK_ERROR(hipGraphAddMemcpyNode1D(
+        &GraphNode, hCommandBuffer->HIPGraph, DepsList.data(), DepsList.size(),
+        pDst, &Src, size, hipMemcpyDeviceToHost));
 
     // Get sync point and register the HIPNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
