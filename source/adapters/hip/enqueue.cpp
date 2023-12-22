@@ -1762,6 +1762,7 @@ void setCopyRectParams(ur_rect_region_t region, const void *SrcPtr,
                        size_t dst_slice_pitch, hipMemcpy3DParms &Params) {
   // Set all params to 0 first
   std::memset(&Params, 0, sizeof(hipMemcpy3DParms));
+
   src_row_pitch =
       (!src_row_pitch) ? region.width + src_offset.x : src_row_pitch;
   src_slice_pitch = (!src_slice_pitch)
@@ -1775,9 +1776,8 @@ void setCopyRectParams(ur_rect_region_t region, const void *SrcPtr,
 
   Params.extent.depth = region.depth;
   Params.extent.height = region.height;
-  Params.extent.width = region.depth;
+  Params.extent.width = region.width;
 
-  // TODO: This is bullshit
   Params.srcPtr.ptr = const_cast<void *>(SrcPtr);
   Params.srcPtr.pitch = src_row_pitch;
   Params.srcPtr.xsize = src_row_pitch;
