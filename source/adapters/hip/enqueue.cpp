@@ -317,10 +317,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   size_t BlocksPerGrid[3] = {1u, 1u, 1u};
 
   hipFunction_t HIPFunc = hKernel->get();
-  UR_CHECK_ERROR(setKernelParams(hQueue->getContext(), hQueue->getDevice(),
-                                 workDim, pGlobalWorkOffset, pGlobalWorkSize,
-                                 pLocalWorkSize, hKernel, HIPFunc,
-                                 ThreadsPerBlock, BlocksPerGrid));
+  UR_CHECK_ERROR(setKernelParams(
+      hQueue->getDevice(), workDim, pGlobalWorkOffset, pGlobalWorkSize,
+      pLocalWorkSize, hKernel, HIPFunc, ThreadsPerBlock, BlocksPerGrid));
 
   ur_result_t Result = UR_RESULT_SUCCESS;
   std::unique_ptr<ur_event_handle_t_> RetImplEvent{nullptr};
@@ -1634,31 +1633,29 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueWriteHostPipe(
 
 // Helper to compute kernel parameters from workload
 // dimensions.
-// @param [in]  Context handler to the target Context
 // @param [in]  Device handler to the target Device
 // @param [in]  WorkDim workload dimension
 // @param [in]  GlobalWorkOffset pointer workload global offsets
+// @param [in]  GlobalWorkSize pointer workload global sizes
 // @param [in]  LocalWorkOffset pointer workload local offsets
 // @param [inout] Kernel handler to the kernel
 // @param [inout] HIPFunc handler to the HIP function attached to the kernel
 // @param [out] ThreadsPerBlock Number of threads per block we should run
 // @param [out] BlocksPerGrid Number of blocks per grid we should run
 ur_result_t
-setKernelParams(const ur_context_handle_t Context,
-                const ur_device_handle_t Device, const uint32_t WorkDim,
+setKernelParams(const ur_device_handle_t Device, const uint32_t WorkDim,
                 const size_t *GlobalWorkOffset, const size_t *GlobalWorkSize,
                 const size_t *LocalWorkSize, ur_kernel_handle_t &Kernel,
                 hipFunction_t &HIPFunc, size_t (&ThreadsPerBlock)[3],
                 size_t (&BlocksPerGrid)[3]) {
   ur_result_t Result = UR_RESULT_SUCCESS;
-  size_t MaxThreadsPerBlock[3] = {};
   size_t MaxWorkGroupSize = 0u;
   bool ProvidedLocalWorkGroupSize = LocalWorkSize != nullptr;
 
   try {
-    // Set the active context here as guessLocalWorkSize needs an active context
     ScopedContext Active(Device);
     {
+      size_t MaxThreadsPerBlock[3] = {};
       ur_result_t Result = urDeviceGetInfo(
           Device, UR_DEVICE_INFO_MAX_WORK_ITEM_SIZES,
           sizeof(MaxThreadsPerBlock), MaxThreadsPerBlock, nullptr);
@@ -1668,8 +1665,6 @@ setKernelParams(const ur_context_handle_t Context,
           urDeviceGetInfo(Device, UR_DEVICE_INFO_MAX_WORK_GROUP_SIZE,
                           sizeof(MaxWorkGroupSize), &MaxWorkGroupSize, nullptr);
       UR_ASSERT(Result == UR_RESULT_SUCCESS, Result);
-      // The MaxWorkGroupSize = 1024 for AMD GPU
-      // The MaxThreadsPerBlock = {1024, 1024, 1024}
 
       if (ProvidedLocalWorkGroupSize) {
         auto isValid = [&](int dim) {
