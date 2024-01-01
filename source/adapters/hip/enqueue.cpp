@@ -1651,9 +1651,9 @@ setKernelParams(const ur_device_handle_t Device, const uint32_t WorkDim,
   ur_result_t Result = UR_RESULT_SUCCESS;
   size_t MaxWorkGroupSize = 0u;
   bool ProvidedLocalWorkGroupSize = LocalWorkSize != nullptr;
-
+  ScopedContext Active(Device);
+  
   try {
-    ScopedContext Active(Device);
     {
       size_t MaxThreadsPerBlock[3] = {};
       ur_result_t Result = urDeviceGetInfo(
