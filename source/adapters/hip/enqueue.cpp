@@ -316,16 +316,17 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   size_t ThreadsPerBlock[3] = {32u, 1u, 1u};
   size_t BlocksPerGrid[3] = {1u, 1u, 1u};
 
-  hipFunction_t HIPFunc = hKernel->get();
-  UR_CHECK_ERROR(setKernelParams(
-      hQueue->getDevice(), workDim, pGlobalWorkOffset, pGlobalWorkSize,
-      pLocalWorkSize, hKernel, HIPFunc, ThreadsPerBlock, BlocksPerGrid));
-
   ur_result_t Result = UR_RESULT_SUCCESS;
   std::unique_ptr<ur_event_handle_t_> RetImplEvent{nullptr};
 
   try {
     ur_device_handle_t Dev = hQueue->getDevice();
+
+    hipFunction_t HIPFunc = hKernel->get();
+    UR_CHECK_ERROR(setKernelParams(Dev, workDim, pGlobalWorkOffset,
+                                   pGlobalWorkSize, pLocalWorkSize, hKernel,
+                                   HIPFunc, ThreadsPerBlock, BlocksPerGrid));
+
     ScopedContext Active(Dev);
 
     uint32_t StreamToken;
@@ -1651,9 +1652,9 @@ setKernelParams(const ur_device_handle_t Device, const uint32_t WorkDim,
   ur_result_t Result = UR_RESULT_SUCCESS;
   size_t MaxWorkGroupSize = 0u;
   bool ProvidedLocalWorkGroupSize = LocalWorkSize != nullptr;
-  ScopedContext Active(Device);
-  
+
   try {
+    ScopedContext Active(Device);
     {
       size_t MaxThreadsPerBlock[3] = {};
       ur_result_t Result = urDeviceGetInfo(
