@@ -176,10 +176,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
 
   uint32_t LocalSize = hKernel->getLocalSize();
   hipFunction_t HIPFunc = hKernel->get();
-  Result =
-      setKernelParams(hCommandBuffer->Context, hCommandBuffer->Device, workDim,
-                      pGlobalWorkOffset, pGlobalWorkSize, pLocalWorkSize,
-                      hKernel, HIPFunc, ThreadsPerBlock, BlocksPerGrid);
+  Result = setKernelParams(hCommandBuffer->Device, workDim, pGlobalWorkOffset,
+                           pGlobalWorkSize, pLocalWorkSize, hKernel, HIPFunc,
+                           ThreadsPerBlock, BlocksPerGrid);
   if (Result != UR_RESULT_SUCCESS) {
     return Result;
   }
@@ -426,9 +425,8 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferWriteRectExp(
     hipMemcpy3DParms NodeParams = {};
 
     setCopyRectParams(region, pSrc, hipMemoryTypeHost, hostOffset, hostRowPitch,
-                      hostSlicePitch, DstPtr, hipMemoryTypeDevice,
-                      bufferOffset, bufferRowPitch, bufferSlicePitch,
-                      NodeParams);
+                      hostSlicePitch, DstPtr, hipMemoryTypeDevice, bufferOffset,
+                      bufferRowPitch, bufferSlicePitch, NodeParams);
 
     UR_CHECK_ERROR(hipGraphAddMemcpyNode(&GraphNode, hCommandBuffer->HIPGraph,
                                          DepsList.data(), DepsList.size(),
