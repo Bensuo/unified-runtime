@@ -81,8 +81,8 @@ static ur_result_t getNodesFromSyncPoints(
 // Helper function for enqueuing memory fills
 static ur_result_t enqueueCommandBufferFillHelper(
     ur_exp_command_buffer_handle_t CommandBuffer, void *DstPtr,
-    const hipMemoryType DstType, const void *Pattern, size_t PatternSize,
-    size_t Size, uint32_t NumSyncPointsInWaitList,
+    const void *Pattern, size_t PatternSize, size_t Size,
+    uint32_t NumSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
     ur_exp_command_buffer_sync_point_t *SyncPoint) {
   ur_result_t Result = UR_RESULT_SUCCESS;
@@ -131,7 +131,8 @@ static ur_result_t enqueueCommandBufferFillHelper(
         auto Value = *(static_cast<const uint32_t *>(Pattern) + Step);
 
         // offset the pointer to the part of the buffer we want to write to
-        auto OffsetPtr = DstPtr + (Step * sizeof(uint32_t));
+        auto OffsetPtr = reinterpret_cast<void *>(
+            reinterpret_cast<uint32_t *>(DstPtr) + (Step * sizeof(uint32_t)));
 
         // Create a new node
         hipGraphNode_t GraphNode;
@@ -662,10 +663,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
             UR_RESULT_ERROR_INVALID_SIZE);
 
   auto DstDevice = std::get<BufferMem>(hBuffer->Mem)
-                       .getPtrWithOffset(hQueue->getDevice(), offset);
+                       .getPtrWithOffset(hCommandBuffer->Device, offset);
 
   return enqueueCommandBufferFillHelper(
-      hCommandBuffer, &DstDevice, hipMemoryTypeDevice, pPattern, patternSize,
+      hCommandBuffer, &DstDevice, pPattern, patternSize,
       size, numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
@@ -683,7 +684,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
 
   UR_ASSERT(PatternIsValid && PatternSizeIsValid, UR_RESULT_ERROR_INVALID_SIZE);
   return enqueueCommandBufferFillHelper(
-      hCommandBuffer, pPtr, hipMemoryTypeUnified, pPattern, patternSize, size,
+      hCommandBuffer, pPtr, pPattern, patternSize, size,
       numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
