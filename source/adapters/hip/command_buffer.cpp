@@ -80,7 +80,7 @@ static ur_result_t getNodesFromSyncPoints(
 
 // Helper function for enqueuing memory fills
 static ur_result_t enqueueCommandBufferFillHelper(
-    ur_exp_command_buffer_handle_t CommandBuffer, void *DstDevice,
+    ur_exp_command_buffer_handle_t CommandBuffer, void *DstPtr,
     const hipMemoryType DstType, const void *Pattern, size_t PatternSize,
     size_t Size, uint32_t NumSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
@@ -99,7 +99,7 @@ static ur_result_t enqueueCommandBufferFillHelper(
       // Create a new node
       hipGraphNode_t GraphNode;
       hipMemsetParams NodeParams = {};
-      NodeParams.dst = const_cast<void *>(DstPtr);
+      NodeParams.dst = DstPtr;
       NodeParams.elementSize = PatternSize;
       NodeParams.height = N;
       NodeParams.pitch = PatternSize;
@@ -135,7 +135,6 @@ static ur_result_t enqueueCommandBufferFillHelper(
 
         // Create a new node
         hipGraphNode_t GraphNode;
-        hipMemsetParams NodeParams = {};
         // Update NodeParam
         hipMemsetParams NodeParamsStep = {};
         NodeParamsStep.dst = const_cast<void *>(OffsetPtr);
@@ -594,7 +593,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
     // Get sync point and register the HipNode with it.
     *pSyncPoint = hCommandBuffer->AddSyncPoint(
         std::make_shared<hipGraphNode_t>(GraphNode));
-    
+
     setErrorMessage("Prefetch hint ignored and replaced with empty node as "
                     "prefetch is not supported by HIP Graph backend",
                     UR_RESULT_SUCCESS);
@@ -662,7 +661,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
                 PatternSizeIsValid,
             UR_RESULT_ERROR_INVALID_SIZE);
 
-  auto DstDevice = std::get<BufferMem>(hBuffer->Mem).get() + offset;
+  auto DstDevice = std::get<BufferMem>(hBuffer->Mem)
+                       .getPtrWithOffset(hQueue->getDevice(), offset);
 
   return enqueueCommandBufferFillHelper(
       hCommandBuffer, &DstDevice, hipMemoryTypeDevice, pPattern, patternSize,

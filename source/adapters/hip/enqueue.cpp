@@ -37,8 +37,6 @@ static size_t imageElementByteSize(hipArray_Format ArrayFormat) {
   return 0;
 }
 
-} // namespace
-
 UR_APIEXPORT ur_result_t UR_APICALL enqueueEventsWait(
     ur_queue_handle_t, hipStream_t Stream, uint32_t NumEventsInWaitList,
     const ur_event_handle_t *EventWaitList) {
