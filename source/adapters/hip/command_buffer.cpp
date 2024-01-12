@@ -78,6 +78,88 @@ static ur_result_t getNodesFromSyncPoints(
   return UR_RESULT_SUCCESS;
 }
 
+// Helper function for enqueuing memory fills
+static ur_result_t enqueueCommandBufferFillHelper(
+    ur_exp_command_buffer_handle_t CommandBuffer, void *DstDevice,
+    const hipMemoryType DstType, const void *Pattern, size_t PatternSize,
+    size_t Size, uint32_t NumSyncPointsInWaitList,
+    const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
+    ur_exp_command_buffer_sync_point_t *SyncPoint) {
+  ur_result_t Result = UR_RESULT_SUCCESS;
+  std::vector<hipGraphNode_t> DepsList;
+  UR_CALL(getNodesFromSyncPoints(CommandBuffer, NumSyncPointsInWaitList,
+                                 SyncPointWaitList, DepsList),
+          Result);
+
+  try {
+    const size_t N = Size / PatternSize;
+    auto Value = *static_cast<const uint32_t *>(Pattern);
+
+    if ((PatternSize == 1) || (PatternSize == 2) || (PatternSize == 4)) {
+      // Create a new node
+      hipGraphNode_t GraphNode;
+      hipMemsetParams NodeParams = {};
+      NodeParams.dst = const_cast<void *>(DstPtr);
+      NodeParams.elementSize = PatternSize;
+      NodeParams.height = N;
+      NodeParams.pitch = PatternSize;
+      NodeParams.value = Value;
+      NodeParams.width = 1;
+
+      UR_CHECK_ERROR(hipGraphAddMemsetNode(&GraphNode, CommandBuffer->HIPGraph,
+                                           DepsList.data(), DepsList.size(),
+                                           &NodeParams));
+
+      // Get sync point and register the cuNode with it.
+      *SyncPoint = CommandBuffer->AddSyncPoint(
+          std::make_shared<hipGraphNode_t>(GraphNode));
+
+    } else {
+      // HIP has no memset functions that allow setting values more than 4
+      // bytes. UR API lets you pass an arbitrary "pattern" to the buffer
+      // fill, which can be more than 4 bytes. We must break up the pattern
+      // into 4 byte values, and set the buffer using multiple strided calls.
+      // This means that one hipGraphAddMemsetNode call is made for every 4
+      // bytes in the pattern.
+
+      size_t NumberOfSteps = PatternSize / sizeof(uint32_t);
+
+      // we walk up the pattern in 4-byte steps, and add Memset node for each
+      // 4-byte chunk of the pattern.
+      for (auto Step = 0u; Step < NumberOfSteps; ++Step) {
+        // take 4 bytes of the pattern
+        auto Value = *(static_cast<const uint32_t *>(Pattern) + Step);
+
+        // offset the pointer to the part of the buffer we want to write to
+        auto OffsetPtr = DstPtr + (Step * sizeof(uint32_t));
+
+        // Create a new node
+        hipGraphNode_t GraphNode;
+        hipMemsetParams NodeParams = {};
+        // Update NodeParam
+        hipMemsetParams NodeParamsStep = {};
+        NodeParamsStep.dst = const_cast<void *>(OffsetPtr);
+        NodeParamsStep.elementSize = 4;
+        NodeParamsStep.height = N;
+        NodeParamsStep.pitch = PatternSize;
+        NodeParamsStep.value = Value;
+        NodeParamsStep.width = 1;
+
+        UR_CHECK_ERROR(hipGraphAddMemsetNode(
+            &GraphNode, CommandBuffer->HIPGraph, DepsList.data(),
+            DepsList.size(), &NodeParamsStep));
+
+        // Get sync point and register the cuNode with it.
+        *SyncPoint = CommandBuffer->AddSyncPoint(
+            std::make_shared<hipGraphNode_t>(GraphNode));
+      }
+    }
+  } catch (ur_result_t Err) {
+    Result = Err;
+  }
+  return Result;
+}
+
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferCreateExp(
     ur_context_handle_t hContext, ur_device_handle_t hDevice,
     const ur_exp_command_buffer_desc_t *pCommandBufferDesc,
@@ -484,36 +566,125 @@ ur_result_t UR_APICALL urCommandBufferAppendMemBufferReadRectExp(
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
-    ur_exp_command_buffer_handle_t, const void *, size_t,
-    ur_usm_migration_flags_t, uint32_t,
-    const ur_exp_command_buffer_sync_point_t *,
-    ur_exp_command_buffer_sync_point_t *) {
-  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ur_exp_command_buffer_handle_t hCommandBuffer, const void * /* Mem */,
+    size_t /*Size*/, ur_usm_migration_flags_t /*Flags*/,
+    uint32_t numSyncPointsInWaitList,
+    const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
+    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+  // Prefetch cmd is not supported by Hip Graph.
+  // We implement it as an empty node to enforce dependencies.
+  ur_result_t Result = UR_RESULT_SUCCESS;
+  hipGraphNode_t GraphNode;
+
+  std::vector<hipGraphNode_t> DepsList;
+
+  UR_CALL(getNodesFromSyncPoints(hCommandBuffer, numSyncPointsInWaitList,
+                                 pSyncPointWaitList, DepsList),
+          Result);
+
+  if (Result != UR_RESULT_SUCCESS) {
+    return Result;
+  }
+
+  try {
+    // Create an empty node if the kernel workload size is zero
+    UR_CHECK_ERROR(hipGraphAddEmptyNode(&GraphNode, hCommandBuffer->HIPGraph,
+                                        DepsList.data(), DepsList.size()));
+
+    // Get sync point and register the HipNode with it.
+    *pSyncPoint = hCommandBuffer->AddSyncPoint(
+        std::make_shared<hipGraphNode_t>(GraphNode));
+    
+    setErrorMessage("Prefetch hint ignored and replaced with empty node as "
+                    "prefetch is not supported by HIP Graph backend",
+                    UR_RESULT_SUCCESS);
+    Result = UR_RESULT_ERROR_ADAPTER_SPECIFIC;
+  } catch (ur_result_t Err) {
+    Result = Err;
+  }
+  return Result;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMAdviseExp(
-    ur_exp_command_buffer_handle_t, const void *, size_t, ur_usm_advice_flags_t,
-    uint32_t, const ur_exp_command_buffer_sync_point_t *,
-    ur_exp_command_buffer_sync_point_t *) {
-  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ur_exp_command_buffer_handle_t hCommandBuffer, const void * /* Mem */,
+    size_t /*Size*/, ur_usm_advice_flags_t /*Advice*/,
+    uint32_t numSyncPointsInWaitList,
+    const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
+    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+  // Mem-Advise cmd is not supported by Hip Graph.
+  // We implement it as an empty node to enforce dependencies.
+  ur_result_t Result = UR_RESULT_SUCCESS;
+  hipGraphNode_t GraphNode;
+
+  std::vector<hipGraphNode_t> DepsList;
+
+  UR_CALL(getNodesFromSyncPoints(hCommandBuffer, numSyncPointsInWaitList,
+                                 pSyncPointWaitList, DepsList),
+          Result);
+
+  if (Result != UR_RESULT_SUCCESS) {
+    return Result;
+  }
+
+  try {
+    // Create an empty node if the kernel workload size is zero
+    UR_CHECK_ERROR(hipGraphAddEmptyNode(&GraphNode, hCommandBuffer->HIPGraph,
+                                        DepsList.data(), DepsList.size()));
+
+    // Get sync point and register the HipNode with it.
+    *pSyncPoint = hCommandBuffer->AddSyncPoint(
+        std::make_shared<hipGraphNode_t>(GraphNode));
+
+    setErrorMessage("Memory advice ignored and replaced with empty node as "
+                    "memory advice is not supported by HIP Graph backend",
+                    UR_RESULT_SUCCESS);
+    Result = UR_RESULT_ERROR_ADAPTER_SPECIFIC;
+  } catch (ur_result_t Err) {
+    Result = Err;
+  }
+  return Result;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
-    ur_exp_command_buffer_handle_t, ur_mem_handle_t, const void *, size_t,
-    size_t, size_t, uint32_t, const ur_exp_command_buffer_sync_point_t *,
-    ur_exp_command_buffer_sync_point_t *) {
-  detail::ur::die("Experimental Command-buffer feature is not "
-                  "implemented for HIP adapter.");
-  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ur_exp_command_buffer_handle_t hCommandBuffer, ur_mem_handle_t hBuffer,
+    const void *pPattern, size_t patternSize, size_t offset, size_t size,
+    uint32_t numSyncPointsInWaitList,
+    const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
+    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+  auto ArgsAreMultiplesOfPatternSize =
+      (offset % patternSize == 0) || (size % patternSize == 0);
+
+  auto PatternIsValid = (pPattern != nullptr);
+
+  auto PatternSizeIsValid = ((patternSize & (patternSize - 1)) == 0) &&
+                            (patternSize > 0); // is a positive power of two
+  UR_ASSERT(ArgsAreMultiplesOfPatternSize && PatternIsValid &&
+                PatternSizeIsValid,
+            UR_RESULT_ERROR_INVALID_SIZE);
+
+  auto DstDevice = std::get<BufferMem>(hBuffer->Mem).get() + offset;
+
+  return enqueueCommandBufferFillHelper(
+      hCommandBuffer, &DstDevice, hipMemoryTypeDevice, pPattern, patternSize,
+      size, numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
-    ur_exp_command_buffer_handle_t, void *, const void *, size_t, size_t,
-    uint32_t, const ur_exp_command_buffer_sync_point_t *,
-    ur_exp_command_buffer_sync_point_t *) {
-  detail::ur::die("Experimental Command-buffer feature is not "
-                  "implemented for HIP adapter.");
-  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    ur_exp_command_buffer_handle_t hCommandBuffer, void *pPtr,
+    const void *pPattern, size_t patternSize, size_t size,
+    uint32_t numSyncPointsInWaitList,
+    const ur_exp_command_buffer_sync_point_t *pSyncPointWaitList,
+    ur_exp_command_buffer_sync_point_t *pSyncPoint) {
+
+  auto PatternIsValid = (pPattern != nullptr);
+
+  auto PatternSizeIsValid = ((patternSize & (patternSize - 1)) == 0) &&
+                            (patternSize > 0); // is a positive power of two
+
+  UR_ASSERT(PatternIsValid && PatternSizeIsValid, UR_RESULT_ERROR_INVALID_SIZE);
+  return enqueueCommandBufferFillHelper(
+      hCommandBuffer, pPtr, hipMemoryTypeUnified, pPattern, patternSize, size,
+      numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
