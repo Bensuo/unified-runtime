@@ -80,9 +80,9 @@ static ur_result_t getNodesFromSyncPoints(
 
 // Helper function for enqueuing memory fills
 static ur_result_t enqueueCommandBufferFillHelper(
-    ur_exp_command_buffer_handle_t CommandBuffer, void *DstPtr,
-    const void *Pattern, size_t PatternSize, size_t Size,
-    uint32_t NumSyncPointsInWaitList,
+    ur_exp_command_buffer_handle_t CommandBuffer, void *DstDevice,
+    const hipMemoryType DstType, const void *Pattern, size_t PatternSize,
+    size_t Size, uint32_t NumSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
     ur_exp_command_buffer_sync_point_t *SyncPoint) {
   ur_result_t Result = UR_RESULT_SUCCESS;
@@ -94,6 +94,9 @@ static ur_result_t enqueueCommandBufferFillHelper(
   try {
     const size_t N = Size / PatternSize;
     auto Value = *static_cast<const uint32_t *>(Pattern);
+    auto DstPtr = DstType == hipMemoryTypeDevice
+                      ? *static_cast<hipDeviceptr_t *>(DstDevice)
+                      : DstDevice;
 
     if ((PatternSize == 1) || (PatternSize == 2) || (PatternSize == 4)) {
       // Create a new node
@@ -666,7 +669,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
                        .getPtrWithOffset(hCommandBuffer->Device, offset);
 
   return enqueueCommandBufferFillHelper(
-      hCommandBuffer, &DstDevice, pPattern, patternSize,
+      hCommandBuffer, &DstDevice, hipMemoryTypeDevice, pPattern, patternSize,
       size, numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
@@ -684,7 +687,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
 
   UR_ASSERT(PatternIsValid && PatternSizeIsValid, UR_RESULT_ERROR_INVALID_SIZE);
   return enqueueCommandBufferFillHelper(
-      hCommandBuffer, pPtr, pPattern, patternSize, size,
+      hCommandBuffer, pPtr, hipMemoryTypeUnified, pPattern, patternSize, size,
       numSyncPointsInWaitList, pSyncPointWaitList, pSyncPoint);
 }
 
