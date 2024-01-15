@@ -37,9 +37,9 @@ static size_t imageElementByteSize(hipArray_Format ArrayFormat) {
   return 0;
 }
 
-ur_result_t UR_APICALL enqueueEventsWait(
-    ur_queue_handle_t, hipStream_t Stream, uint32_t NumEventsInWaitList,
-    const ur_event_handle_t *EventWaitList) {
+ur_result_t enqueueEventsWait(ur_queue_handle_t, hipStream_t Stream,
+                              uint32_t NumEventsInWaitList,
+                              const ur_event_handle_t *EventWaitList) {
   if (!EventWaitList) {
     return UR_RESULT_SUCCESS;
   }
@@ -67,9 +67,10 @@ ur_result_t UR_APICALL enqueueEventsWait(
   }
 }
 
-void UR_APICALL simpleGuessLocalWorkSize(
-    size_t *ThreadsPerBlock, const size_t *GlobalWorkSize,
-    const size_t MaxThreadsPerBlock[3], ur_kernel_handle_t Kernel) {
+void simpleGuessLocalWorkSize(size_t *ThreadsPerBlock,
+                              const size_t *GlobalWorkSize,
+                              const size_t MaxThreadsPerBlock[3],
+                              ur_kernel_handle_t Kernel) {
   assert(ThreadsPerBlock != nullptr);
   assert(GlobalWorkSize != nullptr);
   assert(Kernel != nullptr);
