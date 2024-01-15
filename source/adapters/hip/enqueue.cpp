@@ -37,9 +37,11 @@ static size_t imageElementByteSize(hipArray_Format ArrayFormat) {
   return 0;
 }
 
-ur_result_t enqueueEventsWait(ur_queue_handle_t, hipStream_t Stream,
-                              uint32_t NumEventsInWaitList,
-                              const ur_event_handle_t *EventWaitList) {
+} // namespace
+
+UR_APIEXPORT ur_result_t UR_APICALL enqueueEventsWait(
+    ur_queue_handle_t, hipStream_t Stream, uint32_t NumEventsInWaitList,
+    const ur_event_handle_t *EventWaitList) {
   if (!EventWaitList) {
     return UR_RESULT_SUCCESS;
   }
@@ -67,10 +69,9 @@ ur_result_t enqueueEventsWait(ur_queue_handle_t, hipStream_t Stream,
   }
 }
 
-void simpleGuessLocalWorkSize(size_t *ThreadsPerBlock,
-                              const size_t *GlobalWorkSize,
-                              const size_t MaxThreadsPerBlock[3],
-                              ur_kernel_handle_t Kernel) {
+UR_APIEXPORT void UR_APICALL simpleGuessLocalWorkSize(
+    size_t *ThreadsPerBlock, const size_t *GlobalWorkSize,
+    const size_t MaxThreadsPerBlock[3], ur_kernel_handle_t Kernel) {
   assert(ThreadsPerBlock != nullptr);
   assert(GlobalWorkSize != nullptr);
   assert(Kernel != nullptr);
@@ -85,6 +86,8 @@ void simpleGuessLocalWorkSize(size_t *ThreadsPerBlock,
     --ThreadsPerBlock[0];
   }
 }
+
+namespace {
 
 ur_result_t setHipMemAdvise(const void *DevPtr, const size_t Size,
                             ur_usm_advice_flags_t URAdviceFlags,
