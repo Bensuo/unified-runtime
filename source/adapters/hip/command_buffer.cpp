@@ -121,40 +121,67 @@ static ur_result_t enqueueCommandBufferFillHelper(
       // HIP has no memset functions that allow setting values more than 4
       // bytes. UR API lets you pass an arbitrary "pattern" to the buffer
       // fill, which can be more than 4 bytes. We must break up the pattern
-      // into 4 byte values, and set the buffer using multiple strided calls.
-      // This means that one hipGraphAddMemsetNode call is made for every 4
+      // into 1 byte values, and set the buffer using multiple strided calls.
+      // This means that one hipGraphAddMemsetNode call is made for every 1
       // bytes in the pattern.
 
-      size_t NumberOfSteps = PatternSize / sizeof(uint32_t);
+      std::vector<hipGraphNode_t> HIPNodesList = {};
+      size_t NumberOfSteps = PatternSize / sizeof(uint8_t);
 
-      // we walk up the pattern in 4-byte steps, and add Memset node for each
-      // 4-byte chunk of the pattern.
-      for (auto Step = 0u; Step < NumberOfSteps; ++Step) {
-        // take 4 bytes of the pattern
-        auto Value = *(static_cast<const uint32_t *>(Pattern) + Step);
+      // take 1 bytes of the pattern
+      auto Value = *(static_cast<const uint8_t *>(Pattern));
+
+      // Create a new node
+      hipGraphNode_t GraphNodeInit;
+      // Update NodeParam
+      hipMemsetParams NodeParamsStepInit = {};
+      NodeParamsStepInit.dst = DstPtr;
+      NodeParamsStepInit.elementSize = 4;
+      NodeParamsStepInit.height = Size / NumberOfSteps;
+      NodeParamsStepInit.pitch = NumberOfSteps * sizeof(uint8_t);
+      NodeParamsStepInit.value = Value;
+      NodeParamsStepInit.width = 1;
+
+      UR_CHECK_ERROR(hipGraphAddMemsetNode(
+          &GraphNodeInit, CommandBuffer->HIPGraph, DepsList.data(),
+          DepsList.size(), &NodeParamsStepInit));
+
+      // Get sync point and register the cuNode with it.
+      *SyncPoint = CommandBuffer->AddSyncPoint(
+          std::make_shared<hipGraphNode_t>(GraphNodeInit));
+
+      HIPNodesList.push_back(GraphNodeInit);
+
+      // we walk up the pattern in 1-byte steps, and add Memset node for each
+      // 1-byte chunk of the pattern.
+      for (auto Step = 4u; Step < NumberOfSteps; ++Step) {
+        // take 1 bytes of the pattern
+        auto Value = *(static_cast<const uint8_t *>(Pattern) + Step);
 
         // offset the pointer to the part of the buffer we want to write to
         auto OffsetPtr = reinterpret_cast<void *>(
-            reinterpret_cast<uint32_t *>(DstPtr) + (Step * sizeof(uint32_t)));
+            reinterpret_cast<uint8_t *>(DstPtr) + (Step * sizeof(uint8_t)));
 
         // Create a new node
         hipGraphNode_t GraphNode;
         // Update NodeParam
         hipMemsetParams NodeParamsStep = {};
-        NodeParamsStep.dst = const_cast<void *>(OffsetPtr);
-        NodeParamsStep.elementSize = 4;
-        NodeParamsStep.height = N;
-        NodeParamsStep.pitch = PatternSize;
+        NodeParamsStep.dst = reinterpret_cast<void *>(OffsetPtr);
+        NodeParamsStep.elementSize = 1;
+        NodeParamsStep.height = Size / NumberOfSteps;
+        NodeParamsStep.pitch = NumberOfSteps * sizeof(uint8_t);
         NodeParamsStep.value = Value;
         NodeParamsStep.width = 1;
 
         UR_CHECK_ERROR(hipGraphAddMemsetNode(
-            &GraphNode, CommandBuffer->HIPGraph, DepsList.data(),
-            DepsList.size(), &NodeParamsStep));
+            &GraphNode, CommandBuffer->HIPGraph, HIPNodesList.data(),
+            HIPNodesList.size(), &NodeParamsStep));
 
         // Get sync point and register the cuNode with it.
         *SyncPoint = CommandBuffer->AddSyncPoint(
             std::make_shared<hipGraphNode_t>(GraphNode));
+
+        HIPNodesList.push_back(GraphNode);
       }
     }
   } catch (ur_result_t Err) {
