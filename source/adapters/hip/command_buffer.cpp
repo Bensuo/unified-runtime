@@ -91,8 +91,6 @@ static ur_result_t enqueueCommandBufferFillHelper(
                                  SyncPointWaitList, DepsList),
           Result);
 
-  std::cout << "enqueueCommandBufferFillHelper Size = " << Size
-            << " PatternSize = " << PatternSize << std::endl;
   try {
     const size_t N = Size / PatternSize;
     auto Value = *static_cast<const uint32_t *>(Pattern);
@@ -130,10 +128,8 @@ static ur_result_t enqueueCommandBufferFillHelper(
       std::vector<hipGraphNode_t> HIPNodesList = {};
       size_t NumberOfSteps = PatternSize / sizeof(uint8_t);
 
-      std::cout << "NumberOfSteps = " << NumberOfSteps << std::endl;
-
       // take 1 bytes of the pattern
-      auto Value = *(static_cast<const uint8_t *>(Pattern));
+      auto Value = *(static_cast<const uint32_t *>(Pattern));
 
       // Create a new node
       hipGraphNode_t GraphNodeInit;
@@ -165,9 +161,6 @@ static ur_result_t enqueueCommandBufferFillHelper(
         // offset the pointer to the part of the buffer we want to write to
         auto OffsetPtr = reinterpret_cast<void *>(
             reinterpret_cast<uint8_t *>(DstPtr) + (Step * sizeof(uint8_t)));
-
-        std::cout << "Step = " << Step << " Value = " << Value
-                  << " OffsetPtr = " << OffsetPtr << std::endl;
 
         // Create a new node
         hipGraphNode_t GraphNode;
