@@ -143,7 +143,7 @@ static ur_result_t enqueueCommandBufferFillHelper(
       NodeParamsStepFirst.elementSize = 4;
       NodeParamsStepFirst.height = Size / NumberOfSteps;
       NodeParamsStepFirst.pitch = NumberOfSteps * sizeof(uint8_t);
-      NodeParamsStepFirst.value = Value;
+      NodeParamsStepFirst.value = ValueFirst;
       NodeParamsStepFirst.width = 1;
 
       UR_CHECK_ERROR(hipGraphAddMemsetNode(
