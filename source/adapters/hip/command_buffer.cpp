@@ -125,32 +125,36 @@ static ur_result_t enqueueCommandBufferFillHelper(
       // This means that one hipGraphAddMemsetNode call is made for every 1
       // bytes in the pattern.
 
+      // List to handle inter-node dependencies
       std::vector<hipGraphNode_t> HIPNodesList = {};
+      // List shared pointer that will point to the last node created
+      std::shared_ptr<hipGraphNode_t> GraphNodePtr;
+
       size_t NumberOfSteps = PatternSize / sizeof(uint8_t);
 
-      // take 1 bytes of the pattern
-      auto Value = *(static_cast<const uint32_t *>(Pattern));
+      // take 4 bytes of the pattern
+      auto ValueFirst = *(static_cast<const uint32_t *>(Pattern));
 
       // Create a new node
-      hipGraphNode_t GraphNodeInit;
+      hipGraphNode_t GraphNodeFirst;
       // Update NodeParam
-      hipMemsetParams NodeParamsStepInit = {};
-      NodeParamsStepInit.dst = DstPtr;
-      NodeParamsStepInit.elementSize = 4;
-      NodeParamsStepInit.height = Size / NumberOfSteps;
-      NodeParamsStepInit.pitch = NumberOfSteps * sizeof(uint8_t);
-      NodeParamsStepInit.value = Value;
-      NodeParamsStepInit.width = 1;
+      hipMemsetParams NodeParamsStepFirst = {};
+      NodeParamsStepFirst.dst = DstPtr;
+      NodeParamsStepFirst.elementSize = 4;
+      NodeParamsStepFirst.height = Size / NumberOfSteps;
+      NodeParamsStepFirst.pitch = NumberOfSteps * sizeof(uint8_t);
+      NodeParamsStepFirst.value = Value;
+      NodeParamsStepFirst.width = 1;
 
       UR_CHECK_ERROR(hipGraphAddMemsetNode(
-          &GraphNodeInit, CommandBuffer->HIPGraph, DepsList.data(),
-          DepsList.size(), &NodeParamsStepInit));
+          &GraphNodeFirst, CommandBuffer->HIPGraph, DepsList.data(),
+          DepsList.size(), &NodeParamsStepFirst));
 
       // Get sync point and register the cuNode with it.
       *SyncPoint = CommandBuffer->AddSyncPoint(
-          std::make_shared<hipGraphNode_t>(GraphNodeInit));
+          std::make_shared<hipGraphNode_t>(GraphNodeFirst));
 
-      HIPNodesList.push_back(GraphNodeInit);
+      HIPNodesList.push_back(GraphNodeFirst);
 
       // we walk up the pattern in 1-byte steps, and add Memset node for each
       // 1-byte chunk of the pattern.
@@ -177,11 +181,12 @@ static ur_result_t enqueueCommandBufferFillHelper(
             &GraphNode, CommandBuffer->HIPGraph, HIPNodesList.data(),
             HIPNodesList.size(), &NodeParamsStep));
 
+        GraphNodePtr = std::make_shared<hipGraphNode_t>(GraphNode);
         // Get sync point and register the cuNode with it.
-        *SyncPoint = CommandBuffer->AddSyncPoint(
-            std::make_shared<hipGraphNode_t>(GraphNode));
+        *SyncPoint = CommandBuffer->AddSyncPoint(GraphNodePtr);
 
-        HIPNodesList.push_back(GraphNode);
+        HIPNodesList.clear();
+        HIPNodesList.push_back(*GraphNodePtr.get());
       }
     }
   } catch (ur_result_t Err) {
