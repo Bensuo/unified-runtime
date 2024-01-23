@@ -215,6 +215,7 @@ typedef enum ur_function_t {
     UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_ADVISE_EXP = 213,                    ///< Enumerator for ::urCommandBufferAppendUSMAdviseExp
     UR_FUNCTION_ENQUEUE_COOPERATIVE_KERNEL_LAUNCH_EXP = 214,                   ///< Enumerator for ::urEnqueueCooperativeKernelLaunchExp
     UR_FUNCTION_KERNEL_SUGGEST_MAX_COOPERATIVE_GROUP_COUNT_EXP = 215,          ///< Enumerator for ::urKernelSuggestMaxCooperativeGroupCountExp
+    UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP = 218,                       ///< Enumerator for ::urSyncPointGetProfilingInfoExp
     /// @cond
     UR_FUNCTION_FORCE_UINT32 = 0x7fffffff
     /// @endcond
@@ -8339,6 +8340,39 @@ urCommandBufferEnqueueExp(
                                                    ///< command-buffer execution instance.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get profiling information for the sync point execution associated with
+///        an event object
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_UNINITIALIZED
+///     - ::UR_RESULT_ERROR_DEVICE_LOST
+///     - ::UR_RESULT_ERROR_ADAPTER_SPECIFIC
+///     - ::UR_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `NULL == hEvent`
+///     - ::UR_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::UR_PROFILING_INFO_COMMAND_COMPLETE < propName`
+///     - ::UR_RESULT_ERROR_PROFILING_INFO_NOT_AVAILABLE
+///         + If `hEvent`s associated queue was not created with `UR_QUEUE_FLAG_PROFILING_ENABLE`.
+///     - ::UR_RESULT_ERROR_INVALID_VALUE
+///         + `pPropValue && propSize == 0`
+///     - ::UR_RESULT_ERROR_INVALID_EVENT
+///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
+///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+UR_APIEXPORT ur_result_t UR_APICALL
+urSyncPointGetProfilingInfoExp(
+    ur_event_handle_t hEvent,                     ///< [in] handle of the event object
+    ur_exp_command_buffer_sync_point_t SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
+                                                  ///< to get profile information
+    ur_profiling_info_t propName,                 ///< [in] the name of the profiling property to query
+    size_t propSize,                              ///< [in] size in bytes of the profiling property value
+    void *pPropValue,                             ///< [out][optional][typename(propName, propSize)] value of the profiling
+                                                  ///< property
+    size_t *pPropSizeRet                          ///< [out][optional] pointer to the actual size in bytes returned in
+                                                  ///< propValue
+);
+
 #if !defined(__GNUC__)
 #pragma endregion
 #endif
@@ -10689,6 +10723,19 @@ typedef struct ur_command_buffer_enqueue_exp_params_t {
     const ur_event_handle_t **pphEventWaitList;
     ur_event_handle_t **pphEvent;
 } ur_command_buffer_enqueue_exp_params_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function parameters for urSyncPointGetProfilingInfoExp
+/// @details Each entry is a pointer to the parameter passed to the function;
+///     allowing the callback the ability to modify the parameter's value
+typedef struct ur_sync_point_get_profiling_info_exp_params_t {
+    ur_event_handle_t *phEvent;
+    ur_exp_command_buffer_sync_point_t *pSyncPoint;
+    ur_profiling_info_t *ppropName;
+    size_t *ppropSize;
+    void **ppPropValue;
+    size_t **ppPropSizeRet;
+} ur_sync_point_get_profiling_info_exp_params_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Function parameters for urUsmP2PEnablePeerAccessExp

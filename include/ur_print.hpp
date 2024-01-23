@@ -879,6 +879,9 @@ inline std::ostream &operator<<(std::ostream &os, ur_function_t value) {
     case UR_FUNCTION_KERNEL_SUGGEST_MAX_COOPERATIVE_GROUP_COUNT_EXP:
         os << "UR_FUNCTION_KERNEL_SUGGEST_MAX_COOPERATIVE_GROUP_COUNT_EXP";
         break;
+    case UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP:
+        os << "UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP";
+        break;
     default:
         os << "unknown enumerator";
         break;
@@ -15234,6 +15237,45 @@ inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Print operator for the ur_sync_point_get_profiling_info_exp_params_t type
+/// @returns
+///     std::ostream &
+inline std::ostream &operator<<(std::ostream &os, [[maybe_unused]] const struct ur_sync_point_get_profiling_info_exp_params_t *params) {
+
+    os << ".hEvent = ";
+
+    ur::details::printPtr(os,
+                          *(params->phEvent));
+
+    os << ", ";
+    os << ".SyncPoint = ";
+
+    os << *(params->pSyncPoint);
+
+    os << ", ";
+    os << ".propName = ";
+
+    os << *(params->ppropName);
+
+    os << ", ";
+    os << ".propSize = ";
+
+    os << *(params->ppropSize);
+
+    os << ", ";
+    os << ".pPropValue = ";
+    ur::details::printTagged(os, *(params->ppPropValue), *(params->ppropName), *(params->ppropSize));
+
+    os << ", ";
+    os << ".pPropSizeRet = ";
+
+    ur::details::printPtr(os,
+                          *(params->ppPropSizeRet));
+
+    return os;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Print operator for the ur_usm_p2p_enable_peer_access_exp_params_t type
 /// @returns
 ///     std::ostream &
@@ -16366,6 +16408,9 @@ inline ur_result_t UR_APICALL printFunctionParams(std::ostream &os, ur_function_
     } break;
     case UR_FUNCTION_COMMAND_BUFFER_ENQUEUE_EXP: {
         os << (const struct ur_command_buffer_enqueue_exp_params_t *)params;
+    } break;
+    case UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP: {
+        os << (const struct ur_sync_point_get_profiling_info_exp_params_t *)params;
     } break;
     case UR_FUNCTION_USM_P2P_ENABLE_PEER_ACCESS_EXP: {
         os << (const struct ur_usm_p2p_enable_peer_access_exp_params_t *)params;

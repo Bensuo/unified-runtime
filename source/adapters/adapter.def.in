@@ -16,6 +16,7 @@ EXPORTS
 	urGetProgramExpProcAddrTable
 	urGetQueueProcAddrTable
 	urGetSamplerProcAddrTable
+	urGetSyncPointExpProcAddrTable
 	urGetUSMProcAddrTable
 	urGetUSMExpProcAddrTable
 	urGetUsmP2PExpProcAddrTable

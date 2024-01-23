@@ -5808,6 +5808,46 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Intercept function for urSyncPointGetProfilingInfoExp
+__urdlllocal ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
+    ur_event_handle_t hEvent, ///< [in] handle of the event object
+    ur_exp_command_buffer_sync_point_t
+        SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
+                   ///< to get profile information
+    ur_profiling_info_t
+        propName,    ///< [in] the name of the profiling property to query
+    size_t propSize, ///< [in] size in bytes of the profiling property value
+    void *
+        pPropValue, ///< [out][optional][typename(propName, propSize)] value of the profiling
+                    ///< property
+    size_t *
+        pPropSizeRet ///< [out][optional] pointer to the actual size in bytes returned in
+                     ///< propValue
+) {
+    auto pfnGetProfilingInfoExp =
+        context.urDdiTable.SyncPointExp.pfnGetProfilingInfoExp;
+
+    if (nullptr == pfnGetProfilingInfoExp) {
+        return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    ur_sync_point_get_profiling_info_exp_params_t params = {
+        &hEvent, &SyncPoint, &propName, &propSize, &pPropValue, &pPropSizeRet};
+    uint64_t instance =
+        context.notify_begin(UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP,
+                             "urSyncPointGetProfilingInfoExp", &params);
+
+    ur_result_t result = pfnGetProfilingInfoExp(
+        hEvent, SyncPoint, propName, propSize, pPropValue, pPropSizeRet);
+
+    context.notify_end(UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP,
+                       "urSyncPointGetProfilingInfoExp", &params, &result,
+                       instance);
+
+    return result;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Intercept function for urEnqueueCooperativeKernelLaunchExp
 __urdlllocal ur_result_t UR_APICALL urEnqueueCooperativeKernelLaunchExp(
     ur_queue_handle_t hQueue,   ///< [in] handle of the queue object
@@ -7129,6 +7169,40 @@ __urdlllocal ur_result_t UR_APICALL urGetSamplerProcAddrTable(
     return result;
 }
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Exported function for filling application's SyncPointExp table
+///        with current process' addresses
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
+///     - ::UR_RESULT_ERROR_UNSUPPORTED_VERSION
+__urdlllocal ur_result_t UR_APICALL urGetSyncPointExpProcAddrTable(
+    ur_api_version_t version, ///< [in] API version requested
+    ur_sync_point_exp_dditable_t
+        *pDdiTable ///< [in,out] pointer to table of DDI function pointers
+) {
+    auto &dditable = ur_tracing_layer::context.urDdiTable.SyncPointExp;
+
+    if (nullptr == pDdiTable) {
+        return UR_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    if (UR_MAJOR_VERSION(ur_tracing_layer::context.version) !=
+            UR_MAJOR_VERSION(version) ||
+        UR_MINOR_VERSION(ur_tracing_layer::context.version) >
+            UR_MINOR_VERSION(version)) {
+        return UR_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ur_result_t result = UR_RESULT_SUCCESS;
+
+    dditable.pfnGetProfilingInfoExp = pDdiTable->pfnGetProfilingInfoExp;
+    pDdiTable->pfnGetProfilingInfoExp =
+        ur_tracing_layer::urSyncPointGetProfilingInfoExp;
+
+    return result;
+}
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Exported function for filling application's USM table
 ///        with current process' addresses
 ///
@@ -7467,6 +7541,11 @@ ur_result_t context_t::init(ur_dditable_t *dditable,
     if (UR_RESULT_SUCCESS == result) {
         result = ur_tracing_layer::urGetSamplerProcAddrTable(
             UR_API_VERSION_CURRENT, &dditable->Sampler);
+    }
+
+    if (UR_RESULT_SUCCESS == result) {
+        result = ur_tracing_layer::urGetSyncPointExpProcAddrTable(
+            UR_API_VERSION_CURRENT, &dditable->SyncPointExp);
     }
 
     if (UR_RESULT_SUCCESS == result) {

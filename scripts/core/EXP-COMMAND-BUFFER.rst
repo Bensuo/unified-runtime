@@ -211,6 +211,7 @@ Functions
 * ${x}CommandBufferAppendUSMPrefetchExp
 * ${x}CommandBufferAppendUSMAdviseExp
 * ${x}CommandBufferEnqueueExp
+* ${x}SyncPointGetProfilingInfoExp
 
 Changelog
 --------------------------------------------------------------------------------
@@ -226,6 +227,9 @@ Changelog
 +-----------+-------------------------------------------------------+
 | 1.3       | Add function definitions for Prefetch and Advise      |
 |           | commands                                              |
++-----------+-------------------------------------------------------+
+| 1.4       | Add function definitions for getting sync point       |
+|           | profiling information                                 |
 +-----------+-------------------------------------------------------+
 
 Contributors

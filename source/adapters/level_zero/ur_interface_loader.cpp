@@ -341,6 +341,7 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetCommandBufferExpProcAddrTable(
   pDdiTable->pfnAppendUSMAdviseExp = urCommandBufferAppendUSMAdviseExp;
   pDdiTable->pfnAppendMemBufferFillExp = urCommandBufferAppendMemBufferFillExp;
   pDdiTable->pfnEnqueueExp = urCommandBufferEnqueueExp;
+  pDdiTable->pfnGetProfilingInfoExp = urSyncPointGetProfilingInfoExp;
 
   return retVal;
 }

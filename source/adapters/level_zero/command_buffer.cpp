@@ -986,3 +986,93 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 
   return UR_RESULT_SUCCESS;
 }
+
+UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
+    ur_event_handle_t Event, ///< [in] handle of the event object
+    ur_command_buffer_sync_point_t
+        SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from
+                   ///< which we want to get profile information
+    ur_profiling_info_t
+        PropName, ///< [in] the name of the profiling property to query
+    size_t
+        PropValueSize, ///< [in] size in bytes of the profiling property value
+    void *PropValue,   ///< [out][optional] value of the profiling property
+    size_t *PropValueSizeRet ///< [out][optional] pointer to the actual size in
+                             ///< bytes returned in propValue
+) {
+  std::shared_lock<ur_shared_mutex> EventLock(Event->Mutex);
+
+  if (Event->UrQueue &&
+      (Event->UrQueue->Properties & UR_QUEUE_FLAG_PROFILING_ENABLE) == 0) {
+    return UR_RESULT_ERROR_PROFILING_INFO_NOT_AVAILABLE;
+  }
+
+  ur_device_handle_t Device =
+      Event->UrQueue ? Event->UrQueue->Device : Event->Context->Devices[0];
+
+  uint64_t ZeTimerResolution = Device->ZeDeviceProperties->timerResolution;
+  const uint64_t TimestampMaxValue =
+      ((1ULL << Device->ZeDeviceProperties->kernelTimestampValidBits) - 1ULL);
+
+  UrReturnHelper ReturnValue(PropValueSize, PropValue, PropValueSizeRet);
+
+  ze_kernel_timestamp_result_t tsResult;
+
+  // A Command-buffer consists of three command-lists for which only a single
+  // event is returned to users. The actual profiling information related to the
+  // command-buffer should therefore be extrated from graph events themsleves.
+  // The timestamps of these events are saved in a memory region attached to
+  // event usning CommandData field. The timings must therefore be recovered
+  // from this memory.
+  if (Event->CommandType == UR_COMMAND_COMMAND_BUFFER_ENQUEUE_EXP) {
+    if (Event->CommandData) {
+      command_buffer_profiling_t *ProfilingsPtr;
+      switch (PropName) {
+      case UR_PROFILING_INFO_COMMAND_START: {
+        ProfilingsPtr =
+            static_cast<command_buffer_profiling_t *>(Event->CommandData);
+	uint64_t Index = static_cast<const uint64_t>(SyncPoint);
+        // Sync-point order does not necessarily match to the order of
+        // execution. We therefore look for the first command executed.
+        uint64_t StartTime = ProfilingsPtr->Timestamps[Index].global.kernelStart;
+        uint64_t ContextStartTime =
+            (StartTime & TimestampMaxValue) * ZeTimerResolution;
+        return ReturnValue(ContextStartTime);
+      }
+      case UR_PROFILING_INFO_COMMAND_END: {
+        ProfilingsPtr =
+            static_cast<command_buffer_profiling_t *>(Event->CommandData);
+        // Sync-point order does not necessarily match to the order of
+        // execution. We therefore look for the last command executed.
+	uint64_t Index = static_cast<const uint64_t>(SyncPoint);
+        uint64_t EndTime = ProfilingsPtr->Timestamps[Index].global.kernelEnd;
+        uint64_t LastStart = ProfilingsPtr->Timestamps[Index].global.kernelStart;
+        uint64_t ContextStartTime = (LastStart & TimestampMaxValue);
+        uint64_t ContextEndTime = (EndTime & TimestampMaxValue);
+
+        //
+        // Handle a possible wrap-around (the underlying HW counter is <
+        // 64-bit). Note, it will not report correct time if there were multiple
+        // wrap arounds, and the longer term plan is to enlarge the capacity of
+        // the HW timestamps.
+        //
+        if (ContextEndTime <= ContextStartTime) {
+          ContextEndTime += TimestampMaxValue;
+        }
+        ContextEndTime *= ZeTimerResolution;
+        return ReturnValue(ContextEndTime);
+      }
+      default:
+        urPrint("urEventGetProfilingInfo: not supported ParamName\n");
+        return UR_RESULT_ERROR_INVALID_VALUE;
+      }
+    } else {
+      return UR_RESULT_ERROR_PROFILING_INFO_NOT_AVAILABLE;
+    }
+  } else {
+    urPrint("urEventGetProfilingInfo: not supported Event type\n");
+    return UR_RESULT_ERROR_INVALID_VALUE;
+  }
+
+  return UR_RESULT_SUCCESS;
+}

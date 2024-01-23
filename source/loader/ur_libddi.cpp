@@ -100,6 +100,11 @@ __urdlllocal ur_result_t context_t::urLoaderInit() {
     }
 
     if (UR_RESULT_SUCCESS == result) {
+        result = urGetSyncPointExpProcAddrTable(UR_API_VERSION_CURRENT,
+                                                &urDdiTable.SyncPointExp);
+    }
+
+    if (UR_RESULT_SUCCESS == result) {
         result = urGetUSMProcAddrTable(UR_API_VERSION_CURRENT, &urDdiTable.USM);
     }
 
