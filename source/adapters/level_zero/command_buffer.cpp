@@ -989,7 +989,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 
 UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
     ur_event_handle_t Event, ///< [in] handle of the event object
-    ur_command_buffer_sync_point_t
+    ur_exp_command_buffer_sync_point_t
         SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from
                    ///< which we want to get profile information
     ur_profiling_info_t
