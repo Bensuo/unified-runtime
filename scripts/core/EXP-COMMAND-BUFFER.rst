@@ -132,6 +132,15 @@ were obtained from.
                                            pLocalWorkSize, 1, &syncPoint, 
                                            nullptr);
 
+    // Get SyncPoint profiling information
+    ${x}_event_handle_t event;
+    ${x}_profiling_info_t propName;
+    size_t propSize;
+    void* pPropValue;
+    size_t pPropSizeRet;
+    ${x}SyncPointGetProfilingInfoExp(event, syncPoint, propName, propSize,
+                                     pPropValue, &pPropSizeRet);
+
 Enqueueing Command-Buffers
 --------------------------------------------------------------------------------
 
