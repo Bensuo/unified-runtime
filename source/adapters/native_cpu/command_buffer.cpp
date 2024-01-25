@@ -134,15 +134,37 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendMemBufferFillExp(
+    ur_exp_command_buffer_handle_t, ur_mem_handle_t, const void *, size_t,
+    size_t, size_t, uint32_t, const ur_exp_command_buffer_sync_point_t *,
+    ur_exp_command_buffer_sync_point_t *) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMFillExp(
+    ur_exp_command_buffer_handle_t, void *, const void *, size_t, size_t,
+    uint32_t, const ur_exp_command_buffer_sync_point_t *,
+    ur_exp_command_buffer_sync_point_t *) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
+    ur_exp_command_buffer_handle_t, const void *, size_t,
+    ur_usm_migration_flags_t, uint32_t,
+    const ur_exp_command_buffer_sync_point_t *,
+    ur_exp_command_buffer_sync_point_t *) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMAdviseExp(
+    ur_exp_command_buffer_handle_t, const void *, size_t, ur_usm_advice_flags_t,
+    uint32_t, const ur_exp_command_buffer_sync_point_t *,
+    ur_exp_command_buffer_sync_point_t *) {
+  return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
-    ur_event_handle_t Event, ur_exp_command_buffer_sync_point_t SyncPoint,
-    ur_profiling_info_t PropName, size_t PropValueSize, void *PropValue,
-    size_t *PropValueSizeRet) {
-  (void)Event;
-  (void)SyncPoint;
-  (void)PropName;
-  (void)PropValueSize;
-  (void)PropValue;
-  (void)PropValueSizeRet;
+    ur_event_handle_t, ur_exp_command_buffer_sync_point_t, ur_profiling_info_t,
+    size_t, void *, size_t *) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

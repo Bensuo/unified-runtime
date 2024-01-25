@@ -2011,16 +2011,6 @@ typedef ur_result_t(UR_APICALL *ur_pfnCommandBufferEnqueueExp_t)(
     ur_event_handle_t *);
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for urSyncPointGetProfilingInfoExp
-typedef ur_result_t(UR_APICALL *ur_pfnSyncPointGetProfilingInfoExp_t)(
-    ur_event_handle_t,
-    ur_exp_command_buffer_sync_point_t,
-    ur_profiling_info_t,
-    size_t,
-    void *,
-    size_t *);
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of CommandBufferExp functions pointers
 typedef struct ur_command_buffer_exp_dditable_t {
     ur_pfnCommandBufferCreateExp_t pfnCreateExp;
@@ -2040,7 +2030,6 @@ typedef struct ur_command_buffer_exp_dditable_t {
     ur_pfnCommandBufferAppendUSMPrefetchExp_t pfnAppendUSMPrefetchExp;
     ur_pfnCommandBufferAppendUSMAdviseExp_t pfnAppendUSMAdviseExp;
     ur_pfnCommandBufferEnqueueExp_t pfnEnqueueExp;
-    ur_pfnSyncPointGetProfilingInfoExp_t pfnGetProfilingInfoExp;
 } ur_command_buffer_exp_dditable_t;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2063,6 +2052,16 @@ urGetCommandBufferExpProcAddrTable(
 typedef ur_result_t(UR_APICALL *ur_pfnGetCommandBufferExpProcAddrTable_t)(
     ur_api_version_t,
     ur_command_buffer_exp_dditable_t *);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for urSyncPointGetProfilingInfoExp
+typedef ur_result_t(UR_APICALL *ur_pfnSyncPointGetProfilingInfoExp_t)(
+    ur_event_handle_t,
+    ur_exp_command_buffer_sync_point_t,
+    ur_profiling_info_t,
+    size_t,
+    void *,
+    size_t *);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Table of SyncPointExp functions pointers
