@@ -988,18 +988,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
-    ur_event_handle_t Event, ///< [in] handle of the event object
-    ur_exp_command_buffer_sync_point_t
-        SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from
-                   ///< which we want to get profile information
-    ur_profiling_info_t
-        PropName, ///< [in] the name of the profiling property to query
-    size_t
-        PropValueSize, ///< [in] size in bytes of the profiling property value
-    void *PropValue,   ///< [out][optional] value of the profiling property
-    size_t *PropValueSizeRet ///< [out][optional] pointer to the actual size in
-                             ///< bytes returned in propValue
-) {
+    ur_event_handle_t Event, ur_exp_command_buffer_sync_point_t SyncPoint,
+    ur_profiling_info_t PropName, size_t PropValueSize, void *PropValue,
+    size_t *PropValueSizeRet) {
   std::shared_lock<ur_shared_mutex> EventLock(Event->Mutex);
 
   if (Event->UrQueue &&
@@ -1018,12 +1009,14 @@ UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
 
   ze_kernel_timestamp_result_t tsResult;
 
-  // A Command-buffer consists of three command-lists for which only a single
-  // event is returned to users. The actual profiling information related to the
-  // command-buffer should therefore be extrated from graph events themsleves.
-  // The timestamps of these events are saved in a memory region attached to
-  // event usning CommandData field. The timings must therefore be recovered
-  // from this memory.
+  // Node profiling info is stored in the CommandData field of the event
+  // returned from graph submission.
+  // The timing info of each command corresponding to a node is stored using
+  // `zeCommandListAppendQueryKernelTimestamps`. This command stores the timing
+  // info of each command/node in the same order as the sync-points that were
+  // assigned to this node when it was enqueued. Consequently, `SyncPoint`
+  // corresponds to the index of the memory slot containing the timestamps
+  // corresponding to this specific node.
   if (Event->CommandType == UR_COMMAND_COMMAND_BUFFER_ENQUEUE_EXP) {
     if (Event->CommandData) {
       command_buffer_profiling_t *ProfilingsPtr;
@@ -1031,10 +1024,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
       case UR_PROFILING_INFO_COMMAND_START: {
         ProfilingsPtr =
             static_cast<command_buffer_profiling_t *>(Event->CommandData);
-	uint64_t Index = static_cast<const uint64_t>(SyncPoint);
-        // Sync-point order does not necessarily match to the order of
-        // execution. We therefore look for the first command executed.
-        uint64_t StartTime = ProfilingsPtr->Timestamps[Index].global.kernelStart;
+        uint64_t Index = static_cast<const uint64_t>(SyncPoint);
+
+        uint64_t StartTime =
+            ProfilingsPtr->Timestamps[Index].global.kernelStart;
         uint64_t ContextStartTime =
             (StartTime & TimestampMaxValue) * ZeTimerResolution;
         return ReturnValue(ContextStartTime);
@@ -1042,11 +1035,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
       case UR_PROFILING_INFO_COMMAND_END: {
         ProfilingsPtr =
             static_cast<command_buffer_profiling_t *>(Event->CommandData);
-        // Sync-point order does not necessarily match to the order of
-        // execution. We therefore look for the last command executed.
-	uint64_t Index = static_cast<const uint64_t>(SyncPoint);
+        uint64_t Index = static_cast<const uint64_t>(SyncPoint);
         uint64_t EndTime = ProfilingsPtr->Timestamps[Index].global.kernelEnd;
-        uint64_t LastStart = ProfilingsPtr->Timestamps[Index].global.kernelStart;
+        uint64_t LastStart =
+            ProfilingsPtr->Timestamps[Index].global.kernelStart;
         uint64_t ContextStartTime = (LastStart & TimestampMaxValue);
         uint64_t ContextEndTime = (EndTime & TimestampMaxValue);
 
