@@ -1026,6 +1026,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
             static_cast<command_buffer_profiling_t *>(Event->CommandData);
         uint64_t Index = static_cast<const uint64_t>(SyncPoint);
 
+        if (Index > ProfilingsPtr->NumEvents) {
+          return UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP;
+        }
+
         uint64_t StartTime =
             ProfilingsPtr->Timestamps[Index].global.kernelStart;
         uint64_t ContextStartTime =
@@ -1036,6 +1040,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
         ProfilingsPtr =
             static_cast<command_buffer_profiling_t *>(Event->CommandData);
         uint64_t Index = static_cast<const uint64_t>(SyncPoint);
+
+        if (Index > ProfilingsPtr->NumEvents) {
+          return UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP;
+        }
+
         uint64_t EndTime = ProfilingsPtr->Timestamps[Index].global.kernelEnd;
         uint64_t LastStart =
             ProfilingsPtr->Timestamps[Index].global.kernelStart;

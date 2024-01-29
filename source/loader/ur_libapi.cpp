@@ -7856,6 +7856,7 @@ ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 ///     - ::UR_RESULT_ERROR_INVALID_EVENT
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
 ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
     ur_event_handle_t hEvent, ///< [in] handle of the event object
     ur_exp_command_buffer_sync_point_t
