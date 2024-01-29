@@ -1064,14 +1064,15 @@ UR_APIEXPORT ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
         return ReturnValue(ContextEndTime);
       }
       default:
-        urPrint("urEventGetProfilingInfo: not supported ParamName\n");
+        urPrint(
+            "urEventGetSyncPointProfilingInfoExp: not supported ParamName\n");
         return UR_RESULT_ERROR_INVALID_VALUE;
       }
     } else {
       return UR_RESULT_ERROR_PROFILING_INFO_NOT_AVAILABLE;
     }
   } else {
-    urPrint("urEventGetProfilingInfo: not supported Event type\n");
+    urPrint("urEventGetSyncPointProfilingInfoExp: not supported Event type\n");
     return UR_RESULT_ERROR_INVALID_VALUE;
   }
 
