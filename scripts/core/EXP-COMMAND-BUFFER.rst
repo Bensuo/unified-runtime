@@ -134,12 +134,16 @@ were obtained from.
 
     // Get SyncPoint profiling information
     ${x}_event_handle_t event;
+
+    ${x}CommandBufferEnqueueExp(hCommandBuffer, hQueue, 0, nullptr,
+                                &event);
+    
     ${x}_profiling_info_t propName;
     size_t propSize;
     void* pPropValue;
     size_t pPropSizeRet;
-    ${x}SyncPointGetProfilingInfoExp(event, syncPoint, propName, propSize,
-                                     pPropValue, &pPropSizeRet);
+    ${x}EventGetSyncPointProfilingInfoExp(event, syncPoint, propName, propSize,
+                                          pPropValue, &pPropSizeRet);
 
 Enqueueing Command-Buffers
 --------------------------------------------------------------------------------
@@ -220,7 +224,7 @@ Functions
 * ${x}CommandBufferAppendUSMPrefetchExp
 * ${x}CommandBufferAppendUSMAdviseExp
 * ${x}CommandBufferEnqueueExp
-* ${x}SyncPointGetProfilingInfoExp
+* ${x}EventGetSyncPointProfilingInfoExp
 
 Changelog
 --------------------------------------------------------------------------------

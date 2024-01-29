@@ -5231,11 +5231,11 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Intercept function for urSyncPointGetProfilingInfoExp
-__urdlllocal ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
+/// @brief Intercept function for urEventGetSyncPointProfilingInfoExp
+__urdlllocal ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
     ur_event_handle_t hEvent, ///< [in] handle of the event object
     ur_exp_command_buffer_sync_point_t
-        SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
+        syncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
                    ///< to get profile information
     ur_profiling_info_t
         propName,    ///< [in] the name of the profiling property to query
@@ -5250,11 +5250,11 @@ __urdlllocal ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
     ur_result_t result = UR_RESULT_SUCCESS;
 
     // if the driver has created a custom function, then call it instead of using the generic path
-    auto pfnGetProfilingInfoExp =
-        d_context.urDdiTable.SyncPointExp.pfnGetProfilingInfoExp;
-    if (nullptr != pfnGetProfilingInfoExp) {
-        result = pfnGetProfilingInfoExp(hEvent, SyncPoint, propName, propSize,
-                                        pPropValue, pPropSizeRet);
+    auto pfnGetSyncPointProfilingInfoExp =
+        d_context.urDdiTable.EventExp.pfnGetSyncPointProfilingInfoExp;
+    if (nullptr != pfnGetSyncPointProfilingInfoExp) {
+        result = pfnGetSyncPointProfilingInfoExp(
+            hEvent, syncPoint, propName, propSize, pPropValue, pPropSizeRet);
     } else {
         // generic implementation
     }
@@ -5934,6 +5934,37 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetEventProcAddrTable(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Exported function for filling application's EventExp table
+///        with current process' addresses
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
+///     - ::UR_RESULT_ERROR_UNSUPPORTED_VERSION
+UR_DLLEXPORT ur_result_t UR_APICALL urGetEventExpProcAddrTable(
+    ur_api_version_t version, ///< [in] API version requested
+    ur_event_exp_dditable_t
+        *pDdiTable ///< [in,out] pointer to table of DDI function pointers
+    ) try {
+    if (nullptr == pDdiTable) {
+        return UR_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    if (driver::d_context.version < version) {
+        return UR_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+
+    ur_result_t result = UR_RESULT_SUCCESS;
+
+    pDdiTable->pfnGetSyncPointProfilingInfoExp =
+        driver::urEventGetSyncPointProfilingInfoExp;
+
+    return result;
+} catch (...) {
+    return exceptionToResult(std::current_exception());
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Exported function for filling application's Kernel table
 ///        with current process' addresses
 ///
@@ -6319,36 +6350,6 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetSamplerProcAddrTable(
 
     pDdiTable->pfnCreateWithNativeHandle =
         driver::urSamplerCreateWithNativeHandle;
-
-    return result;
-} catch (...) {
-    return exceptionToResult(std::current_exception());
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Exported function for filling application's SyncPointExp table
-///        with current process' addresses
-///
-/// @returns
-///     - ::UR_RESULT_SUCCESS
-///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
-///     - ::UR_RESULT_ERROR_UNSUPPORTED_VERSION
-UR_DLLEXPORT ur_result_t UR_APICALL urGetSyncPointExpProcAddrTable(
-    ur_api_version_t version, ///< [in] API version requested
-    ur_sync_point_exp_dditable_t
-        *pDdiTable ///< [in,out] pointer to table of DDI function pointers
-    ) try {
-    if (nullptr == pDdiTable) {
-        return UR_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-
-    if (driver::d_context.version < version) {
-        return UR_RESULT_ERROR_UNSUPPORTED_VERSION;
-    }
-
-    ur_result_t result = UR_RESULT_SUCCESS;
-
-    pDdiTable->pfnGetProfilingInfoExp = driver::urSyncPointGetProfilingInfoExp;
 
     return result;
 } catch (...) {

@@ -270,6 +270,43 @@ typedef ur_result_t(UR_APICALL *ur_pfnGetEventProcAddrTable_t)(
     ur_event_dditable_t *);
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for urEventGetSyncPointProfilingInfoExp
+typedef ur_result_t(UR_APICALL *ur_pfnEventGetSyncPointProfilingInfoExp_t)(
+    ur_event_handle_t,
+    ur_exp_command_buffer_sync_point_t,
+    ur_profiling_info_t,
+    size_t,
+    void *,
+    size_t *);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Table of EventExp functions pointers
+typedef struct ur_event_exp_dditable_t {
+    ur_pfnEventGetSyncPointProfilingInfoExp_t pfnGetSyncPointProfilingInfoExp;
+} ur_event_exp_dditable_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Exported function for filling application's EventExp table
+///        with current process' addresses
+///
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_UNINITIALIZED
+///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
+///     - ::UR_RESULT_ERROR_UNSUPPORTED_VERSION
+UR_DLLEXPORT ur_result_t UR_APICALL
+urGetEventExpProcAddrTable(
+    ur_api_version_t version,          ///< [in] API version requested
+    ur_event_exp_dditable_t *pDdiTable ///< [in,out] pointer to table of DDI function pointers
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function-pointer for urGetEventExpProcAddrTable
+typedef ur_result_t(UR_APICALL *ur_pfnGetEventExpProcAddrTable_t)(
+    ur_api_version_t,
+    ur_event_exp_dditable_t *);
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Function-pointer for urProgramCreateWithIL
 typedef ur_result_t(UR_APICALL *ur_pfnProgramCreateWithIL_t)(
     ur_context_handle_t,
@@ -2054,43 +2091,6 @@ typedef ur_result_t(UR_APICALL *ur_pfnGetCommandBufferExpProcAddrTable_t)(
     ur_command_buffer_exp_dditable_t *);
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for urSyncPointGetProfilingInfoExp
-typedef ur_result_t(UR_APICALL *ur_pfnSyncPointGetProfilingInfoExp_t)(
-    ur_event_handle_t,
-    ur_exp_command_buffer_sync_point_t,
-    ur_profiling_info_t,
-    size_t,
-    void *,
-    size_t *);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Table of SyncPointExp functions pointers
-typedef struct ur_sync_point_exp_dditable_t {
-    ur_pfnSyncPointGetProfilingInfoExp_t pfnGetProfilingInfoExp;
-} ur_sync_point_exp_dditable_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Exported function for filling application's SyncPointExp table
-///        with current process' addresses
-///
-/// @returns
-///     - ::UR_RESULT_SUCCESS
-///     - ::UR_RESULT_ERROR_UNINITIALIZED
-///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
-///     - ::UR_RESULT_ERROR_UNSUPPORTED_VERSION
-UR_DLLEXPORT ur_result_t UR_APICALL
-urGetSyncPointExpProcAddrTable(
-    ur_api_version_t version,               ///< [in] API version requested
-    ur_sync_point_exp_dditable_t *pDdiTable ///< [in,out] pointer to table of DDI function pointers
-);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Function-pointer for urGetSyncPointExpProcAddrTable
-typedef ur_result_t(UR_APICALL *ur_pfnGetSyncPointExpProcAddrTable_t)(
-    ur_api_version_t,
-    ur_sync_point_exp_dditable_t *);
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Function-pointer for urUsmP2PEnablePeerAccessExp
 typedef ur_result_t(UR_APICALL *ur_pfnUsmP2PEnablePeerAccessExp_t)(
     ur_device_handle_t,
@@ -2342,6 +2342,7 @@ typedef struct ur_dditable_t {
     ur_platform_dditable_t Platform;
     ur_context_dditable_t Context;
     ur_event_dditable_t Event;
+    ur_event_exp_dditable_t EventExp;
     ur_program_dditable_t Program;
     ur_program_exp_dditable_t ProgramExp;
     ur_kernel_dditable_t Kernel;
@@ -2357,7 +2358,6 @@ typedef struct ur_dditable_t {
     ur_usm_dditable_t USM;
     ur_usm_exp_dditable_t USMExp;
     ur_command_buffer_exp_dditable_t CommandBufferExp;
-    ur_sync_point_exp_dditable_t SyncPointExp;
     ur_usm_p2p_exp_dditable_t UsmP2PExp;
     ur_virtual_mem_dditable_t VirtualMem;
     ur_device_dditable_t Device;

@@ -1449,6 +1449,16 @@ UR_APIEXPORT ur_result_t UR_APICALL urPrintEventCreateWithNativeHandleParams(con
 UR_APIEXPORT ur_result_t UR_APICALL urPrintEventSetCallbackParams(const struct ur_event_set_callback_params_t *params, char *buffer, const size_t buff_size, size_t *out_size);
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Print ur_event_get_sync_point_profiling_info_exp_params_t params struct
+/// @returns
+///     - ::UR_RESULT_SUCCESS
+///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
+///         - `NULL == buffer`
+///     - ::UR_RESULT_ERROR_INVALID_SIZE
+///         - `buff_size < out_size`
+UR_APIEXPORT ur_result_t UR_APICALL urPrintEventGetSyncPointProfilingInfoExpParams(const struct ur_event_get_sync_point_profiling_info_exp_params_t *params, char *buffer, const size_t buff_size, size_t *out_size);
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Print ur_program_create_with_il_params_t params struct
 /// @returns
 ///     - ::UR_RESULT_SUCCESS
@@ -2807,16 +2817,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urPrintCommandBufferAppendUsmAdviseExpParams
 ///     - ::UR_RESULT_ERROR_INVALID_SIZE
 ///         - `buff_size < out_size`
 UR_APIEXPORT ur_result_t UR_APICALL urPrintCommandBufferEnqueueExpParams(const struct ur_command_buffer_enqueue_exp_params_t *params, char *buffer, const size_t buff_size, size_t *out_size);
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Print ur_sync_point_get_profiling_info_exp_params_t params struct
-/// @returns
-///     - ::UR_RESULT_SUCCESS
-///     - ::UR_RESULT_ERROR_INVALID_NULL_POINTER
-///         - `NULL == buffer`
-///     - ::UR_RESULT_ERROR_INVALID_SIZE
-///         - `buff_size < out_size`
-UR_APIEXPORT ur_result_t UR_APICALL urPrintSyncPointGetProfilingInfoExpParams(const struct ur_sync_point_get_profiling_info_exp_params_t *params, char *buffer, const size_t buff_size, size_t *out_size);
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Print ur_usm_p2p_enable_peer_access_exp_params_t params struct

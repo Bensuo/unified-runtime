@@ -6641,10 +6641,10 @@ ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 ///     - ::UR_RESULT_ERROR_INVALID_EVENT
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
-ur_result_t UR_APICALL urSyncPointGetProfilingInfoExp(
+ur_result_t UR_APICALL urEventGetSyncPointProfilingInfoExp(
     ur_event_handle_t hEvent, ///< [in] handle of the event object
     ur_exp_command_buffer_sync_point_t
-        SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
+        syncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
                    ///< to get profile information
     ur_profiling_info_t
         propName,    ///< [in] the name of the profiling property to query

@@ -215,7 +215,7 @@ typedef enum ur_function_t {
     UR_FUNCTION_COMMAND_BUFFER_APPEND_USM_ADVISE_EXP = 213,                    ///< Enumerator for ::urCommandBufferAppendUSMAdviseExp
     UR_FUNCTION_ENQUEUE_COOPERATIVE_KERNEL_LAUNCH_EXP = 214,                   ///< Enumerator for ::urEnqueueCooperativeKernelLaunchExp
     UR_FUNCTION_KERNEL_SUGGEST_MAX_COOPERATIVE_GROUP_COUNT_EXP = 215,          ///< Enumerator for ::urKernelSuggestMaxCooperativeGroupCountExp
-    UR_FUNCTION_SYNC_POINT_GET_PROFILING_INFO_EXP = 218,                       ///< Enumerator for ::urSyncPointGetProfilingInfoExp
+    UR_FUNCTION_EVENT_GET_SYNC_POINT_PROFILING_INFO_EXP = 218,                 ///< Enumerator for ::urEventGetSyncPointProfilingInfoExp
     /// @cond
     UR_FUNCTION_FORCE_UINT32 = 0x7fffffff
     /// @endcond
@@ -8361,9 +8361,9 @@ urCommandBufferEnqueueExp(
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 UR_APIEXPORT ur_result_t UR_APICALL
-urSyncPointGetProfilingInfoExp(
+urEventGetSyncPointProfilingInfoExp(
     ur_event_handle_t hEvent,                     ///< [in] handle of the event object
-    ur_exp_command_buffer_sync_point_t SyncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
+    ur_exp_command_buffer_sync_point_t syncPoint, ///< [in] Sync point referencing the node (i.e. command) from which we want
                                                   ///< to get profile information
     ur_profiling_info_t propName,                 ///< [in] the name of the profiling property to query
     size_t propSize,                              ///< [in] size in bytes of the profiling property value
@@ -9057,6 +9057,19 @@ typedef struct ur_event_set_callback_params_t {
     ur_event_callback_t *ppfnNotify;
     void **ppUserData;
 } ur_event_set_callback_params_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Function parameters for urEventGetSyncPointProfilingInfoExp
+/// @details Each entry is a pointer to the parameter passed to the function;
+///     allowing the callback the ability to modify the parameter's value
+typedef struct ur_event_get_sync_point_profiling_info_exp_params_t {
+    ur_event_handle_t *phEvent;
+    ur_exp_command_buffer_sync_point_t *psyncPoint;
+    ur_profiling_info_t *ppropName;
+    size_t *ppropSize;
+    void **ppPropValue;
+    size_t **ppPropSizeRet;
+} ur_event_get_sync_point_profiling_info_exp_params_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Function parameters for urProgramCreateWithIL
@@ -10723,19 +10736,6 @@ typedef struct ur_command_buffer_enqueue_exp_params_t {
     const ur_event_handle_t **pphEventWaitList;
     ur_event_handle_t **pphEvent;
 } ur_command_buffer_enqueue_exp_params_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Function parameters for urSyncPointGetProfilingInfoExp
-/// @details Each entry is a pointer to the parameter passed to the function;
-///     allowing the callback the ability to modify the parameter's value
-typedef struct ur_sync_point_get_profiling_info_exp_params_t {
-    ur_event_handle_t *phEvent;
-    ur_exp_command_buffer_sync_point_t *pSyncPoint;
-    ur_profiling_info_t *ppropName;
-    size_t *ppropSize;
-    void **ppPropValue;
-    size_t **ppPropSizeRet;
-} ur_sync_point_get_profiling_info_exp_params_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Function parameters for urUsmP2PEnablePeerAccessExp

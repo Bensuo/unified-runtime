@@ -56,6 +56,11 @@ __urdlllocal ur_result_t context_t::urLoaderInit() {
     }
 
     if (UR_RESULT_SUCCESS == result) {
+        result = urGetEventExpProcAddrTable(UR_API_VERSION_CURRENT,
+                                            &urDdiTable.EventExp);
+    }
+
+    if (UR_RESULT_SUCCESS == result) {
         result = urGetKernelProcAddrTable(UR_API_VERSION_CURRENT,
                                           &urDdiTable.Kernel);
     }
@@ -97,11 +102,6 @@ __urdlllocal ur_result_t context_t::urLoaderInit() {
     if (UR_RESULT_SUCCESS == result) {
         result = urGetSamplerProcAddrTable(UR_API_VERSION_CURRENT,
                                            &urDdiTable.Sampler);
-    }
-
-    if (UR_RESULT_SUCCESS == result) {
-        result = urGetSyncPointExpProcAddrTable(UR_API_VERSION_CURRENT,
-                                                &urDdiTable.SyncPointExp);
     }
 
     if (UR_RESULT_SUCCESS == result) {

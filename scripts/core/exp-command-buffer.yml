@@ -707,15 +707,15 @@ returns:
 --- #--------------------------------------------------------------------------
 type: function
 desc: "Get profiling information for the sync point execution associated with an event object"
-class: $xSyncPoint
-name: GetProfilingInfoExp
+class: $xEvent
+name: GetSyncPointProfilingInfoExp
 ordinal: "0"
 params:
     - type: $x_event_handle_t
       name: hEvent
       desc: "[in] handle of the event object"
     - type: $x_exp_command_buffer_sync_point_t
-      name: SyncPoint
+      name: syncPoint
       desc: "[in] Sync point referencing the node (i.e. command) from which we want to get profile information"
     - type: $x_profiling_info_t
       name: propName
