@@ -8360,7 +8360,7 @@ urCommandBufferEnqueueExp(
 ///     - ::UR_RESULT_ERROR_INVALID_EVENT
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
-///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP
+///     - ::UR_RESULT_ERROR_INVALID_COMMAND_BUFFER_SYNC_POINT_EXP - "If `syncPoint` is not referencing a command enqueued in this CommandBuffer. Typically, `syncPoint` > number of commands"
 UR_APIEXPORT ur_result_t UR_APICALL
 urEventGetSyncPointProfilingInfoExp(
     ur_event_handle_t hEvent,                     ///< [in] handle of the event object

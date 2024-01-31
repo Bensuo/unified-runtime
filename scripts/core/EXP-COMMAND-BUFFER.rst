@@ -132,12 +132,16 @@ were obtained from.
                                            pLocalWorkSize, 1, &syncPoint, 
                                            nullptr);
 
-    // Get SyncPoint profiling information
-    ${x}_event_handle_t event;
+    // Finalize the CommandBuffer to launch it
+    ${x}CommandBufferFinalizeExp(hCommandBuffer);
 
+    // Execute the CommandBuffer and obtain the event associated to this
+    // execution
+    ${x}_event_handle_t event;
     ${x}CommandBufferEnqueueExp(hCommandBuffer, hQueue, 0, nullptr,
                                 &event);
-    
+
+    // Get SyncPoint profiling information
     ${x}_profiling_info_t propName;
     size_t propSize;
     void* pPropValue;
