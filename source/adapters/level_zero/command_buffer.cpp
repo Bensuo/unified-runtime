@@ -45,14 +45,15 @@
   │  Prefix  │ Commands added to UR command-buffer by UR user │ Suffix  │
   └──────────┴────────────────────────────────────────────────┴─────────┘
 
-            ┌───────────────────┬──────────────┐──────────────────────────────┐
-  Prefix    │Reset signal event │ Reset events │ Barrier waiting on wait event│
-            └───────────────────┴──────────────┘──────────────────────────────┘
+            ┌───────────────────┬──────────────────────────────┐
+  Prefix    │Reset signal event │ Barrier waiting on wait event│
+            └───────────────────┴──────────────────────────────┘
 
-            ┌─────────────────────────────────────────────┐──────────────┐
-  Suffix    │Barrier waiting on sync-point event,         │  Query CMD   │
-            │signalling the UR command-buffer signal event│  Timestamps  │
-            └─────────────────────────────────────────────┘──────────────┘
+            ┌──────────────┐──────────────┐────────────────────────────────────┐
+  Suffix    │  Query CMD   │ Reset events │Barrier waiting on sync-point event,│
+            │  Timestamps  │              |signaling the UR command-buffer     |
+            |              |              |signal event                        │
+            └──────────────┘──────────────┘────────────────────────────────────┘
 
   For a call to `urCommandBufferEnqueueExp` with an event_list `EL`,
   command-buffer `CB`, and return event `RE` our implementation has to create
@@ -559,7 +560,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
 
   LaunchEvent->CommandData = (void *)Kernel;
   // Increment the reference count of the Kernel and indicate that the Kernel
-  // is in use. Once the event has been signalled, the code in
+  // is in use. Once the event has been signaled, the code in
   // CleanupCompletedEvent(Event) will do a urKernelRelease to update the
   // reference count on the kernel, using the kernel saved in CommandData.
   UR_CALL(urKernelRetain(Kernel));
@@ -872,20 +873,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   UR_CALL(Queue->Context->getAvailableCommandList(Queue, WaitCommandList, false,
                                                   false));
 
-  // Create a list of events of all the events that compose the command buffer
-  // workload.
-  // This loop also resets the L0 events we use for command-buffer internal
-  // sync-points to the non-signalled state.
-  // This is required for multiple submissions.
-  const size_t NumEvents = CommandBuffer->SyncPoints.size();
-  std::vector<ze_event_handle_t> WaitEventList{NumEvents};
-  for (size_t i = 0; i < NumEvents; i++) {
-    auto ZeEvent = CommandBuffer->SyncPoints[i]->ZeEvent;
-    WaitEventList[i] = ZeEvent;
-    ZE2UR_CALL(zeCommandListAppendEventReset,
-               (WaitCommandList->first, ZeEvent));
-  }
-
   bool MustSignalWaitEvent = true;
   if (NumEventsInWaitList) {
     _ur_ze_event_list_t TmpWaitList;
@@ -927,7 +914,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   ur_command_list_ptr_t SignalCommandList{};
   UR_CALL(Queue->Context->getAvailableCommandList(Queue, SignalCommandList,
                                                   false, false));
-  // Reset the wait-event for the UR command-buffer that is signalled when its
+  // Reset the wait-event for the UR command-buffer that is signaled when its
   // submission dependencies have been satisfied.
   ZE2UR_CALL(zeCommandListAppendEventReset,
              (SignalCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
@@ -936,6 +923,15 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
     UR_CALL(createEventAndAssociateQueue(Queue, &RetEvent,
                                          UR_COMMAND_COMMAND_BUFFER_ENQUEUE_EXP,
                                          SignalCommandList, false, true));
+
+    // Create a list of events of all the events that compose the command buffer
+    // workload.
+    const size_t NumEvents = CommandBuffer->SyncPoints.size();
+    std::vector<ze_event_handle_t> WaitEventList{NumEvents};
+    for (size_t i = 0; i < NumEvents; i++) {
+      auto ZeEvent = CommandBuffer->SyncPoints[i]->ZeEvent;
+      WaitEventList[i] = ZeEvent;
+    }
 
     if ((Queue->Properties & UR_QUEUE_FLAG_PROFILING_ENABLE)) {
       // Multiple submissions of a command buffer implies that we need to save
@@ -953,15 +949,22 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
       ZE2UR_CALL(zeCommandListAppendQueryKernelTimestamps,
                  (SignalCommandList->first, WaitEventList.size(),
                   WaitEventList.data(), (void *)Profiling->Timestamps, 0,
-                  RetEvent->ZeEvent, 1,
-                  &(CommandBuffer->SignalEvent->ZeEvent)));
+                  nullptr, 1, &(CommandBuffer->SignalEvent->ZeEvent)));
 
       RetEvent->CommandData = static_cast<void *>(Profiling);
-    } else {
-      ZE2UR_CALL(zeCommandListAppendBarrier,
-                 (SignalCommandList->first, RetEvent->ZeEvent, 1,
-                  &(CommandBuffer->SignalEvent->ZeEvent)));
     }
+
+    // Resets the L0 events we use for command-buffer internal
+    // sync-points to the non-signaled state.
+    // This is required for multiple submissions.
+    for (auto &ZeEvent : WaitEventList) {
+      ZE2UR_CALL(zeCommandListAppendEventReset,
+                 (SignalCommandList->first, ZeEvent));
+    }
+
+    ZE2UR_CALL(zeCommandListAppendBarrier,
+               (SignalCommandList->first, RetEvent->ZeEvent, 1,
+                &(CommandBuffer->SignalEvent->ZeEvent)));
   }
 
   Queue->executeCommandList(SignalCommandList, false, false);
