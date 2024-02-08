@@ -154,7 +154,7 @@ TEST_P(USMFillCommandTest, UpdateExecInfo) {
     ur_exp_command_buffer_update_exec_info_desc_t new_exec_info_descs[3];
 
     // Update direct access flag
-    bool indirect_access = false;
+    bool indirect_access = true;
     new_exec_info_descs[0] = {
         UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_EXEC_INFO_DESC, // stype
         nullptr,                                                    // pNext
@@ -179,14 +179,14 @@ TEST_P(USMFillCommandTest, UpdateExecInfo) {
     ASSERT_SUCCESS(urUSMSharedAlloc(context, device, nullptr, nullptr,
                                     allocation_size, &new_shared_ptr));
     ASSERT_NE(new_shared_ptr, nullptr);
-    void *pointers = {new_shared_ptr};
+    void *pointers[1] = {new_shared_ptr};
     new_exec_info_descs[2] = {
         UR_STRUCTURE_TYPE_EXP_COMMAND_BUFFER_UPDATE_EXEC_INFO_DESC, // stype
         nullptr,                                                    // pNext
         UR_KERNEL_EXEC_INFO_USM_PTRS,                               // propName
         sizeof(pointers),                                           // propSize
-        nullptr,   // pProperties
-        &pointers, // pPropValue
+        nullptr,  // pProperties
+        pointers, // pPropValue
     };
 
     ur_exp_command_buffer_update_kernel_launch_desc_t update_desc = {

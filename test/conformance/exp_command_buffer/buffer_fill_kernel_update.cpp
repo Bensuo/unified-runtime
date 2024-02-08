@@ -14,10 +14,30 @@ struct BufferFillCommandTest
         UUR_RETURN_ON_FATAL_FAILURE(
             urUpdatableCommandBufferExpExecutionTest::SetUp());
 
-        // First argument is buffer to fill (will also be hidden accessor arg)
-        AddBuffer1DArg(sizeof(val) * global_size, &buffer);
+        ASSERT_SUCCESS(urMemBufferCreate(context, UR_MEM_FLAG_READ_WRITE,
+                                         sizeof(val) * global_size, nullptr,
+                                         &buffer));
+
+        // TODO - Enable single code path after https://github.com/oneapi-src/unified-runtime/pull/1176
+        // is merged
+        if (backend != UR_PLATFORM_BACKEND_OPENCL) {
+            // First argument is buffer to fill
+            ASSERT_SUCCESS(urKernelSetArgMemObj(kernel, 0, nullptr, buffer));
+        } else {
+            // First argument is buffer to fill
+            ASSERT_SUCCESS(urKernelSetArgValue(kernel, 0, sizeof(buffer),
+                                               nullptr, &buffer));
+        }
+        // second arg is hidden accessor
+        struct {
+            size_t offsets[1] = {0};
+        } accessor;
+        ASSERT_SUCCESS(urKernelSetArgValue(kernel, 1, sizeof(accessor), nullptr,
+                                           &accessor));
+
         // Second argument is scalar to fill with.
-        AddPodArg(val);
+        ASSERT_SUCCESS(
+            urKernelSetArgValue(kernel, 2, sizeof(val), nullptr, &val));
 
         // Append kernel command to command-buffer and close command-buffer
         ASSERT_SUCCESS(urCommandBufferAppendKernelLaunchExp(

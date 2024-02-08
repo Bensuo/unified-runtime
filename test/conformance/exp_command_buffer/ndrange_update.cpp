@@ -155,6 +155,12 @@ TEST_P(NDRangeUpdateTest, Update3D) {
 // Update the kernel work dimensions to 2, and update global size, local size,
 // and global offset to new values.
 TEST_P(NDRangeUpdateTest, Update2D) {
+    if (backend == UR_PLATFORM_BACKEND_OPENCL) {
+        // OpenCL cl_khr_command_buffer_mutable_dispatch does not support
+        // updating the work dimension.
+        GTEST_SKIP();
+    }
+
     // Run command-buffer prior to update an verify output
     ASSERT_SUCCESS(urCommandBufferEnqueueExp(updatable_cmd_buf_handle, queue, 0,
                                              nullptr, nullptr));
@@ -205,6 +211,12 @@ TEST_P(NDRangeUpdateTest, Update2D) {
 // Update the kernel work dimensions to 1, and check that previously
 // set global size, local size, and global offset update accordingly.
 TEST_P(NDRangeUpdateTest, Update1D) {
+    if (backend == UR_PLATFORM_BACKEND_OPENCL) {
+        // OpenCL cl_khr_command_buffer_mutable_dispatch does not support
+        // updating the work dimension.
+        GTEST_SKIP();
+    }
+
     // Run command-buffer prior to update an verify output
     ASSERT_SUCCESS(urCommandBufferEnqueueExp(updatable_cmd_buf_handle, queue, 0,
                                              nullptr, nullptr));

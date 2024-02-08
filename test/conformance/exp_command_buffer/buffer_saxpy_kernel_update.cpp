@@ -29,8 +29,17 @@ struct BufferSaxpyKernelTest
                                                    0, nullptr, nullptr));
         }
 
-        // Index 0 is output buffer
-        ASSERT_SUCCESS(urKernelSetArgMemObj(kernel, 0, nullptr, buffers[0]));
+        // TODO: Enable single code path once https://github.com/oneapi-src/unified-runtime/pull/1176
+        // is merged
+        if (backend != UR_PLATFORM_BACKEND_OPENCL) {
+            // Index 0 is output buffer
+            ASSERT_SUCCESS(
+                urKernelSetArgMemObj(kernel, 0, nullptr, buffers[0]));
+        } else {
+            // Index 0 is output buffer
+            ASSERT_SUCCESS(urKernelSetArgValue(
+                kernel, 0, sizeof(ur_mem_handle_t), nullptr, &buffers[0]));
+        }
         // Index 1 is output accessor
         struct {
             size_t offsets[1] = {0};
@@ -41,13 +50,25 @@ struct BufferSaxpyKernelTest
         // Index 2 is A
         ASSERT_SUCCESS(urKernelSetArgValue(kernel, 2, sizeof(A), nullptr, &A));
         // Index 3 is X buffer
-        ASSERT_SUCCESS(urKernelSetArgMemObj(kernel, 3, nullptr, buffers[1]));
+        if (backend != UR_PLATFORM_BACKEND_OPENCL) {
+            ASSERT_SUCCESS(
+                urKernelSetArgMemObj(kernel, 3, nullptr, buffers[1]));
+        } else {
+            ASSERT_SUCCESS(urKernelSetArgValue(
+                kernel, 3, sizeof(ur_mem_handle_t), nullptr, &buffers[1]));
+        }
 
         // Index 4 is X buffer accessor
         ASSERT_SUCCESS(urKernelSetArgValue(kernel, 4, sizeof(accessor), nullptr,
                                            &accessor));
         // Index 5 is Y buffer
-        ASSERT_SUCCESS(urKernelSetArgMemObj(kernel, 5, nullptr, buffers[2]));
+        if (backend != UR_PLATFORM_BACKEND_OPENCL) {
+            ASSERT_SUCCESS(
+                urKernelSetArgMemObj(kernel, 5, nullptr, buffers[2]));
+        } else {
+            ASSERT_SUCCESS(urKernelSetArgValue(
+                kernel, 5, sizeof(ur_mem_handle_t), nullptr, &buffers[2]));
+        }
 
         // Index 6 is Y buffer accessor
         ASSERT_SUCCESS(urKernelSetArgValue(kernel, 6, sizeof(accessor), nullptr,

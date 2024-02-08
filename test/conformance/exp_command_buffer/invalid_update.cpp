@@ -41,6 +41,10 @@ struct InvalidUpdateTest
     }
 
     void TearDown() override {
+        // Workaround an issue with the OpenCL adapter implementing urUsmFree
+        // using a blocking free where hangs
+        EXPECT_SUCCESS(urCommandBufferFinalizeExp(updatable_cmd_buf_handle));
+
         if (shared_ptr) {
             EXPECT_SUCCESS(urUSMFree(context, shared_ptr));
         }
