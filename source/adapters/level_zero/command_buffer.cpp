@@ -519,7 +519,7 @@ urCommandBufferFinalizeExp(ur_exp_command_buffer_handle_t CommandBuffer) {
   const size_t NumEvents = CommandBuffer->SyncPoints.size();
   for (size_t i = 0; i < NumEvents; i++) {
     auto ZeEvent = CommandBuffer->SyncPoints[i]->ZeEvent;
-    ZeEventsList.push_back(ZeEvent);
+    CommandBuffer->ZeEventsList.push_back(ZeEvent);
     ZE2UR_CALL(zeCommandListAppendEventReset,
                (CommandBuffer->ZeCommandListResetEvents, ZeEvent));
   }
@@ -531,7 +531,7 @@ urCommandBufferFinalizeExp(ur_exp_command_buffer_handle_t CommandBuffer) {
   // command-buffer signal-event when they are done.
   ZE2UR_CALL(zeCommandListAppendBarrier,
              (CommandBuffer->ZeCommandList, CommandBuffer->SignalEvent->ZeEvent,
-              NumEvents, ZeEventsList.data()));
+              NumEvents, CommandBuffer->ZeEventsList.data()));
 
   // Close the command list and have it ready for dispatch.
   ZE2UR_CALL(zeCommandListClose, (CommandBuffer->ZeCommandList));
@@ -986,7 +986,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
       // engine to recover these timestamps.
       command_buffer_profiling_t *Profiling = new command_buffer_profiling_t();
 
-      Profiling->NumEvents = ZeEventsList.size();
+      Profiling->NumEvents = CommandBuffer->ZeEventsList.size();
       Profiling->Timestamps =
           new ze_kernel_timestamp_result_t[Profiling->NumEvents];
 

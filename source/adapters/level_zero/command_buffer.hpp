@@ -25,11 +25,12 @@ struct command_buffer_profiling_t {
 };
 
 struct ur_exp_command_buffer_handle_t_ : public _ur_object {
-  ur_exp_command_buffer_handle_t_(ur_context_handle_t Context,
-                                  ur_device_handle_t Device,
-                                  ze_command_list_handle_t CommandList,
-                                  ZeStruct<ze_command_list_desc_t> ZeDesc,
-                                  const ur_exp_command_buffer_desc_t *Desc);
+  ur_exp_command_buffer_handle_t_(
+      ur_context_handle_t Context, ur_device_handle_t Device,
+      ze_command_list_handle_t CommandList,
+      ze_command_list_handle_t CommandListResetEvents,
+      ZeStruct<ze_command_list_desc_t> ZeDesc,
+      const ur_exp_command_buffer_desc_t *Desc);
 
   ~ur_exp_command_buffer_handle_t_();
 
