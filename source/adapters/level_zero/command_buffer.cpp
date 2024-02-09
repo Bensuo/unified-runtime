@@ -534,8 +534,9 @@ urCommandBufferFinalizeExp(ur_exp_command_buffer_handle_t CommandBuffer) {
              (CommandBuffer->ZeCommandList, CommandBuffer->SignalEvent->ZeEvent,
               NumEvents, CommandBuffer->ZeEventsList.data()));
 
-  // Close the command list and have it ready for dispatch.
+  // Close the command lists and have them ready for dispatch.
   ZE2UR_CALL(zeCommandListClose, (CommandBuffer->ZeCommandList));
+  ZE2UR_CALL(zeCommandListClose, (CommandBuffer->ZeCommandListResetEvents));
   return UR_RESULT_SUCCESS;
 }
 
