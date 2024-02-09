@@ -488,7 +488,8 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
   ZE2UR_CALL(zeCommandListAppendEventReset,
              (ZeCommandList, RetCommandBuffer->SignalEvent->ZeEvent));
   std::vector<ze_event_handle_t> PrecondEvents = {
-      RetCommandBuffer->WaitEvent, RetCommandBuffer->AllResetEvent};
+      RetCommandBuffer->WaitEvent->ZeEvent,
+      RetCommandBuffer->AllResetEvent->ZeEvent};
   ZE2UR_CALL(
       zeCommandListAppendBarrier,
       (ZeCommandList, nullptr, PrecondEvents.size(), PrecondEvents.data()));
@@ -992,7 +993,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
 
       ZE2UR_CALL(zeCommandListAppendQueryKernelTimestamps,
                  (SignalCommandList->first, ZeEventsList.size(),
-                  ZeEventsList.data(), (void *)Profiling->Timestamps, 0,
+                  CommandBuffer->ZeEventsList.data(), (void *)Profiling->Timestamps, 0,
                   RetEvent->ZeEvent, 1,
                   &(CommandBuffer->SignalEvent->ZeEvent)));
 
