@@ -992,9 +992,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
           new ze_kernel_timestamp_result_t[Profiling->NumEvents];
 
       ZE2UR_CALL(zeCommandListAppendQueryKernelTimestamps,
-                 (SignalCommandList->first, ZeEventsList.size(),
-                  CommandBuffer->ZeEventsList.data(), (void *)Profiling->Timestamps, 0,
-                  RetEvent->ZeEvent, 1,
+                 (SignalCommandList->first, CommandBuffer->ZeEventsList.size(),
+                  CommandBuffer->ZeEventsList.data(),
+                  (void *)Profiling->Timestamps, 0, RetEvent->ZeEvent, 1,
                   &(CommandBuffer->SignalEvent->ZeEvent)));
 
       RetEvent->CommandData = static_cast<void *>(Profiling);
