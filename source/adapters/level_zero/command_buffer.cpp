@@ -41,13 +41,29 @@
   This WaitEvent is reset at the end of the suffix, along with reset commands
   to reset the L0 events used to implement the UR sync-points.
 
+  The prefix has been split into two command-lists for performance concerns.
+  1) This allows the `waitEvent` to be signaled directly on the host if 
+  the waiting list is empty, thus avoiding the need to submit a cmd list.
+  2) Enqueuing a reset ZE command for all events in the command-buffer is time
+  consumming, especially for large graphs.
+  However, this task is not needed for every submission, but only once, when the
+  command-buffer is fixed, i.e. when the command-buffer is finalized. The
+  decorelation between the reset cmd-list and the wait command-list allow us to
+  create and enqueue the reset commands when finalizing the command-buffer, 
+  and only create the wait command-list at submission.
+
   ┌──────────┬────────────────────────────────────────────────┬─────────┐
   │  Prefix  │ Commands added to UR command-buffer by UR user │ Suffix  │
   └──────────┴────────────────────────────────────────────────┴─────────┘
 
-            ┌───────────────────┬──────────────┐──────────────────────────────┐
-  Prefix    │Reset signal event │ Reset events │ Barrier waiting on wait event│
-            └───────────────────┴──────────────┘──────────────────────────────┘
+  Prefix      ┌───────────────────────────────────┐──────────────────┐
+              │ Barrier waiting on the wait list  |                  |
+ (cmd-list 1) |relative to the current submission │ Signal waitEvent |
+              |          (if not empty)           |                  |
+              └───────────────────────────────────┴──────────────────┘
+              ┌───────────────────┬──────────────┐
+ (cmd-list 2) │Reset signal event │ Reset events │
+              └───────────────────┴──────────────┘
 
             ┌─────────────────────────────────────────────┐──────────────┐
   Suffix    │Barrier waiting on sync-point event,         │  Query CMD   │
@@ -60,9 +76,12 @@
   the command-list with extra commands associated with `CB`, and the other
   after `CB`.
 
-  Command-list created on `urCommandBufferEnqueueExp` to execution before `CB`:
+  Command-lists created on `urCommandBufferEnqueueExp` to execution before `CB`:
   ┌───────────────────────────────────────────────────────────┐
   │Barrier on `EL` than signals `CB` WaitEvent when completed │
+  └───────────────────────────────────────────────────────────┘
+  ┌───────────────────────────────────────────────────────────┐
+  │Reset `RE`  and all event of commands enqueued in `CB`     │
   └───────────────────────────────────────────────────────────┘
 
   Command-list created on `urCommandBufferEnqueueExp` to execution after `CB`:
@@ -485,8 +504,9 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                       &RetCommandBuffer->AllResetEvent));
 
   // Add prefix commands
-  ZE2UR_CALL(zeCommandListAppendEventReset,
-             (ZeCommandList, RetCommandBuffer->SignalEvent->ZeEvent));
+  ZE2UR_CALL(
+      zeCommandListAppendEventReset,
+      (ZeCommandListResetEvents, RetCommandBuffer->SignalEvent->ZeEvent));
   std::vector<ze_event_handle_t> PrecondEvents = {
       RetCommandBuffer->WaitEvent->ZeEvent,
       RetCommandBuffer->AllResetEvent->ZeEvent};
