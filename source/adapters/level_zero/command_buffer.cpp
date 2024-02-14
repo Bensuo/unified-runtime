@@ -934,14 +934,13 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
                  (WaitCommandList->first, CommandBuffer->WaitEvent->ZeEvent,
                   CommandBuffer->WaitEvent->WaitList.Length,
                   CommandBuffer->WaitEvent->WaitList.ZeEventList));
+      Queue->executeCommandList(WaitCommandList, false, false);
       MustSignalWaitEvent = false;
     }
   }
   if (MustSignalWaitEvent) {
-    ZE2UR_CALL(zeCommandListAppendSignalEvent,
-               (WaitCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
+    ZE2UR_CALL(zeEventHostSignal, (CommandBuffer->WaitEvent->ZeEvent));
   }
-  Queue->executeCommandList(WaitCommandList, false, false);
 
   // Submit reset events command-list. This command-list is of a batch
   // command-list type, regardless of the UR Queue type. We therefore need to
