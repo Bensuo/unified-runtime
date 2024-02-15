@@ -48,7 +48,7 @@
   consumming, especially for large graphs.
   However, this task is not needed for every submission, but only once, when the
   command-buffer is fixed, i.e. when the command-buffer is finalized. The
-  decorelation between the reset cmd-list and the wait command-list allow us to
+  decorellation between the reset cmd-list and the wait command-list allow us to
   create and enqueue the reset commands when finalizing the command-buffer, 
   and only create the wait command-list at submission.
 
