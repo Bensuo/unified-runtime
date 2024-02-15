@@ -7929,6 +7929,8 @@ typedef struct ur_exp_command_buffer_command_handle_t_ *ur_exp_command_buffer_co
 ///         + `NULL == phCommandBuffer`
 ///     - ::UR_RESULT_ERROR_INVALID_CONTEXT
 ///     - ::UR_RESULT_ERROR_INVALID_DEVICE
+///     - ::UR_RESULT_ERROR_INVALID_OPERATION
+///         + If `pCommandBufferDesc->isUpdatable` is true and `hDevice` does not support UR_DEVICE_INFO_COMMAND_BUFFER_UPDATE_SUPPORT_EXP.
 ///     - ::UR_RESULT_ERROR_OUT_OF_HOST_MEMORY
 ///     - ::UR_RESULT_ERROR_OUT_OF_RESOURCES
 UR_APIEXPORT ur_result_t UR_APICALL

@@ -73,23 +73,25 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferCreateExp(
   const bool IsUpdatable =
       pCommandBufferDesc ? pCommandBufferDesc->isUpdatable : false;
 
-  bool SupportsUpdate = false;
+  bool DeviceSupportsUpdate = false;
   cl_device_id CLDevice = cl_adapter::cast<cl_device_id>(hDevice);
-  CL_RETURN_ON_FAILURE(
-      deviceSupportsURCommandBufferKernelUpdate(CLDevice, SupportsUpdate));
+  CL_RETURN_ON_FAILURE(deviceSupportsURCommandBufferKernelUpdate(
+      CLDevice, DeviceSupportsUpdate));
 
-  const bool Updatable = IsUpdatable && SupportsUpdate;
+  if (IsUpdatable && !DeviceSupportsUpdate) {
+    return UR_RESULT_ERROR_INVALID_OPERATION;
+  }
 
   cl_command_buffer_properties_khr Properties[3] = {
       CL_COMMAND_BUFFER_FLAGS_KHR,
-      Updatable ? CL_COMMAND_BUFFER_MUTABLE_KHR : 0u, 0};
+      IsUpdatable ? CL_COMMAND_BUFFER_MUTABLE_KHR : 0u, 0};
   auto CLCommandBuffer = clCreateCommandBufferKHR(
       1, cl_adapter::cast<cl_command_queue *>(&Queue), Properties, &Res);
   CL_RETURN_ON_FAILURE_AND_SET_NULL(Res, phCommandBuffer);
 
   try {
     auto URCommandBuffer = std::make_unique<ur_exp_command_buffer_handle_t_>(
-        Queue, hContext, CLCommandBuffer, Updatable);
+        Queue, hContext, CLCommandBuffer, IsUpdatable);
     *phCommandBuffer = URCommandBuffer.release();
   } catch (...) {
     return UR_RESULT_ERROR_OUT_OF_RESOURCES;
@@ -499,7 +501,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferUpdateKernelLaunchExp(
         ArgPointerList[i];
     cl_mutable_dispatch_arg_khr &USMArg = CLUSMArgs[i];
     USMArg.arg_index = URPointerArg.argIndex;
-    USMArg.arg_value = *(void **)URPointerArg.pNewPointerArg;
+    USMArg.arg_value = *(void *const *)URPointerArg.pNewPointerArg;
   }
 
   // Find the memory object and scalar arguments to the kernel.
