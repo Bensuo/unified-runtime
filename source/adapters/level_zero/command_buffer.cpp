@@ -10,7 +10,7 @@
 #include "command_buffer.hpp"
 #include "ur_level_zero.hpp"
 
-/* L0 Command-buffer Extension Doc see:  
+/* L0 Command-buffer Extension Doc see:
 https://github.com/intel/llvm/blob/sycl/sycl/doc/design/CommandGraph.md#level-zero
 */
 
