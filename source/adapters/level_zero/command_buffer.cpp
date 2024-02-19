@@ -162,7 +162,7 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
 
   for (auto &AssociatedKernel : kernelsList) {
     ReleaseIndirectMem(AssociatedKernel);
-    UR_CALL(urKernelRelease(AssociatedKernel));
+    urKernelRelease(AssociatedKernel);
   }
 }
 
@@ -317,10 +317,10 @@ static ur_result_t enqueueCommandBufferMemCopyHelper(
     void *Dst, const void *Src, size_t Size, uint32_t NumSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
     ur_exp_command_buffer_sync_point_t *SyncPoint) {
-  if (IsInOrderCmdList) {
-    ZE2UR_CALL(zeCommandListAppendMemoryCopy,
-	       (CommandBuffer->ZeCommandList, Dst, Src, Size,
-		nullptr, 0, nullptr)));
+  if (CommandBuffer->IsInOrderCmdList) {
+    ZE2UR_CALL(
+        zeCommandListAppendMemoryCopy,
+        (CommandBuffer->ZeCommandList, Dst, Src, Size, nullptr, 0, nullptr));
 
     urPrint("calling zeCommandListAppendMemoryCopy()");
   } else {
@@ -389,7 +389,7 @@ static ur_result_t enqueueCommandBufferMemCopyRectHelper(
   const ze_copy_region_t ZeDstRegion = {DstOriginX, DstOriginY, DstOriginZ,
                                         Width,      Height,     Depth};
 
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     ZE2UR_CALL(zeCommandListAppendMemoryCopyRegion,
                (CommandBuffer->ZeCommandList, Dst, &ZeDstRegion, DstPitch,
                 DstSlicePitch, Src, &ZeSrcRegion, SrcPitch, SrcSlicePitch,
@@ -442,7 +442,7 @@ static ur_result_t enqueueCommandBufferFillHelper(
               .ZeProperties.maxMemoryFillPatternSize,
       UR_RESULT_ERROR_INVALID_VALUE);
 
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     ZE2UR_CALL(zeCommandListAppendMemoryFill,
                (CommandBuffer->ZeCommandList, Ptr, Pattern, PatternSize, Size,
                 nullptr, 0, nullptr));
@@ -480,7 +480,7 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                          ur_exp_command_buffer_handle_t *CommandBuffer) {
 
   const bool IsInOrder =
-      pCommandBufferDesc ? pCommandBufferDesc->isInOrder : false;
+      CommandBufferDesc ? CommandBufferDesc->isInOrder : false;
 
   // Force compute queue type for now. Copy engine types may be better suited
   // for host to device copies.
@@ -547,7 +547,7 @@ urCommandBufferReleaseExp(ur_exp_command_buffer_handle_t CommandBuffer) {
 
 UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferFinalizeExp(ur_exp_command_buffer_handle_t CommandBuffer) {
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     ZE2UR_CALL(
         zeCommandListAppendSignalEvent,
         (CommandBuffer->ZeCommandList, CommandBuffer->SignalEvent->ZeEvent));
@@ -618,14 +618,14 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
 
   ZE2UR_CALL(zeKernelSetGroupSize, (Kernel->ZeKernel, WG[0], WG[1], WG[2]));
 
-  kernelsList.push_back(Kernel);
+  CommandBuffer->kernelsList.push_back(Kernel);
   // Increment the reference count of the Kernel and indicate that the Kernel
   // is in use. Once the event has been signaled, the code in
   // CleanupCompletedEvent(Event) will do a urKernelRelease to update the
   // reference count on the kernel, using the kernel saved in CommandData.
   UR_CALL(urKernelRetain(Kernel));
 
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     ZE2UR_CALL(zeCommandListAppendLaunchKernel,
                (CommandBuffer->ZeCommandList, Kernel->ZeKernel,
                 &ZeThreadGroupDimensions, nullptr, 0, nullptr));
@@ -802,7 +802,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
     ur_exp_command_buffer_sync_point_t *SyncPoint) {
   std::ignore = Flags;
 
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     // Add the prefetch command to the command buffer.
     // Note that L0 does not handle migration flags.
     ZE2UR_CALL(zeCommandListAppendMemoryPrefetch,
@@ -873,7 +873,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMAdviseExp(
 
   ze_memory_advice_t ZeAdvice = static_cast<ze_memory_advice_t>(Value);
 
-  if (IsInOrderCmdList) {
+  if (CommandBuffer->IsInOrderCmdList) {
     ZE2UR_CALL(zeCommandListAppendMemAdvise,
                (CommandBuffer->ZeCommandList, CommandBuffer->Device->ZeDevice,
                 Mem, Size, ZeAdvice));
