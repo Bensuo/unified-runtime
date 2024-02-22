@@ -918,6 +918,7 @@ template <> ze_result_t zeHostSynchronize(ze_command_queue_handle_t Handle) {
 // If the caller locks queue mutex then it must pass 'true' to QueueLocked.
 ur_result_t CleanupCompletedEvent(ur_event_handle_t Event, bool QueueLocked,
                                   bool SetEventCompleted) {
+  ur_kernel_handle_t AssociatedKernel = nullptr;
   // List of dependent events.
   std::list<ur_event_handle_t> EventsToBeReleased;
   ur_queue_handle_t AssociatedQueue = nullptr;
@@ -930,6 +931,14 @@ ur_result_t CleanupCompletedEvent(ur_event_handle_t Event, bool QueueLocked,
       return UR_RESULT_SUCCESS;
 
     AssociatedQueue = Event->UrQueue;
+
+    // Remember the kernel associated with this event if there is one. We are
+    // going to release it later.
+    if (Event->CommandType == UR_COMMAND_KERNEL_LAUNCH && Event->CommandData) {
+      AssociatedKernel =
+          reinterpret_cast<ur_kernel_handle_t>(Event->CommandData);
+      Event->CommandData = nullptr;
+    }
 
     // Make a list of all the dependent events that must have signalled
     // because this event was dependent on them.
@@ -962,6 +971,12 @@ ur_result_t CleanupCompletedEvent(ur_event_handle_t Event, bool QueueLocked,
       }
     }
   };
+
+  // We've reset event data members above, now cleanup resources.
+  if (AssociatedKernel) {
+    ReleaseIndirectMem(AssociatedKernel);
+    UR_CALL(urKernelRelease(AssociatedKernel));
+  }
 
   if (AssociatedQueue) {
     {
