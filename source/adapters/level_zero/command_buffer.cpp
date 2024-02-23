@@ -86,15 +86,42 @@ graphs.
 
 */
 
+namespace {
+/// Checks the version of the level-zero driver.
+/// @param Context execution context
+/// @param VersionMajor Major verion number to compare to.
+/// @param VersionMinor Minor verion number to compare to.
+/// @param VersionBuild Build verion number to compare to.
+/// @return true is the version of the driver is higher than the compared
+/// version
+bool check_driver_version(ur_context_handle_t Context, uint32_t VersionMajor,
+                          uint32_t VersionMinor, uint32_t VersionBuild) {
+  ZeStruct<ze_driver_properties_t> ZeDriverProperties;
+  ZE2UR_CALL(zeDriverGetProperties,
+             (Context->getPlatform()->ZeDriver, &ZeDriverProperties));
+  uint32_t DriverVersion = ZeDriverProperties.driverVersion;
+  auto DriverVersionMajor = (DriverVersion & 0xFF000000) >> 24;
+  auto DriverVersionMinor = (DriverVersion & 0x00FF0000) >> 16;
+  auto DriverVersionBuild = DriverVersion & 0x0000FFFF;
+
+  if ((DriverVersionMajor >= VersionMajor) &&
+      (DriverVersionMinor >= VersionMinor) &&
+      (DriverVersionBuild >= VersionBuild)) {
+    return true;
+  }
+  return false;
+}
+}; // namespace
+
 ur_exp_command_buffer_handle_t_::ur_exp_command_buffer_handle_t_(
     ur_context_handle_t Context, ur_device_handle_t Device,
     ze_command_list_handle_t CommandList,
     ZeStruct<ze_command_list_desc_t> ZeDesc,
-    const ur_exp_command_buffer_desc_t *Desc)
+    const ur_exp_command_buffer_desc_t *Desc, const bool IsInOrderCmdList)
     : Context(Context), Device(Device), ZeCommandList(CommandList),
       ZeCommandListDesc(ZeDesc), ZeFencesList(), QueueProperties(),
-      SyncPoints(), NextSyncPoint(0) {
-  IsInOrderCmdList = Desc->isInOrder;
+      SyncPoints(), NextSyncPoint(0), IsInOrderCmdList(IsInOrderCmdList) {
+  (void)Desc;
   urContextRetain(Context);
   urDeviceRetain(Device);
 }
@@ -478,9 +505,13 @@ UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                          const ur_exp_command_buffer_desc_t *CommandBufferDesc,
                          ur_exp_command_buffer_handle_t *CommandBuffer) {
-
+  // Check driver version.
+  // In-order command-lists are not available in old driver version.
+  bool compatibleDriver = check_driver_version(Context, 1, 3, 28454);
   const bool IsInOrder =
-      CommandBufferDesc ? CommandBufferDesc->isInOrder : false;
+      compatibleDriver
+          ? (CommandBufferDesc ? CommandBufferDesc->isInOrder : false)
+          : false;
 
   // Force compute queue type for now. Copy engine types may be better suited
   // for host to device copies.
@@ -506,7 +537,8 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                                    &ZeCommandListDesc, &ZeCommandList));
   try {
     *CommandBuffer = new ur_exp_command_buffer_handle_t_(
-        Context, Device, ZeCommandList, ZeCommandListDesc, CommandBufferDesc);
+        Context, Device, ZeCommandList, ZeCommandListDesc, CommandBufferDesc,
+        IsInOrder);
   } catch (const std::bad_alloc &) {
     return UR_RESULT_ERROR_OUT_OF_HOST_MEMORY;
   } catch (...) {

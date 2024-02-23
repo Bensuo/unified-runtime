@@ -29,7 +29,8 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
                                   ur_device_handle_t Device,
                                   ze_command_list_handle_t CommandList,
                                   ZeStruct<ze_command_list_desc_t> ZeDesc,
-                                  const ur_exp_command_buffer_desc_t *Desc);
+                                  const ur_exp_command_buffer_desc_t *Desc,
+                                  const bool IsInOrderCmdList);
 
   ~ur_exp_command_buffer_handle_t_();
 
