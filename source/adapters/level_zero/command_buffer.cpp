@@ -88,14 +88,14 @@ graphs.
 
 namespace {
 /// Checks the version of the level-zero driver.
-/// @param Context execution context
+/// @param Context Execution context
 /// @param VersionMajor Major verion number to compare to.
 /// @param VersionMinor Minor verion number to compare to.
 /// @param VersionBuild Build verion number to compare to.
-/// @return true is the version of the driver is higher than the compared
-/// version
-bool check_driver_version(ur_context_handle_t Context, uint32_t VersionMajor,
-                          uint32_t VersionMinor, uint32_t VersionBuild) {
+/// @return true is the version of the driver is higher than or equal to the
+/// compared version
+bool CheckDriverVersion(ur_context_handle_t Context, uint32_t VersionMajor,
+                        uint32_t VersionMinor, uint32_t VersionBuild) {
   ZeStruct<ze_driver_properties_t> ZeDriverProperties;
   ZE2UR_CALL(zeDriverGetProperties,
              (Context->getPlatform()->ZeDriver, &ZeDriverProperties));
@@ -104,12 +104,9 @@ bool check_driver_version(ur_context_handle_t Context, uint32_t VersionMajor,
   auto DriverVersionMinor = (DriverVersion & 0x00FF0000) >> 16;
   auto DriverVersionBuild = DriverVersion & 0x0000FFFF;
 
-  if ((DriverVersionMajor >= VersionMajor) &&
-      (DriverVersionMinor >= VersionMinor) &&
-      (DriverVersionBuild >= VersionBuild)) {
-    return true;
-  }
-  return false;
+  return ((DriverVersionMajor >= VersionMajor) &&
+          (DriverVersionMinor >= VersionMinor) &&
+          (DriverVersionBuild >= VersionBuild));
 }
 }; // namespace
 
@@ -187,7 +184,7 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
     }
   };
 
-  for (auto &AssociatedKernel : kernelsList) {
+  for (auto &AssociatedKernel : KernelsList) {
     ReleaseIndirectMem(AssociatedKernel);
     urKernelRelease(AssociatedKernel);
   }
@@ -505,11 +502,10 @@ UR_APIEXPORT ur_result_t UR_APICALL
 urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                          const ur_exp_command_buffer_desc_t *CommandBufferDesc,
                          ur_exp_command_buffer_handle_t *CommandBuffer) {
-  // Check driver version.
   // In-order command-lists are not available in old driver version.
-  bool compatibleDriver = check_driver_version(Context, 1, 3, 28454);
+  bool CompatibleDriver = CheckDriverVersion(Context, 1, 3, 28454);
   const bool IsInOrder =
-      compatibleDriver
+      CompatibleDriver
           ? (CommandBufferDesc ? CommandBufferDesc->isInOrder : false)
           : false;
 
@@ -521,14 +517,12 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
 
   ZeStruct<ze_command_list_desc_t> ZeCommandListDesc;
   ZeCommandListDesc.commandQueueGroupOrdinal = QueueGroupOrdinal;
-  if (IsInOrder) {
-    ZeCommandListDesc.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
-  } else {
-    // Dependencies between commands are explicitly enforced by sync points when
-    // enqueuing. Consequently, relax the command ordering in the command list
-    // can enable the backend to further optimize the workload
-    ZeCommandListDesc.flags = ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING;
-  }
+
+  // For non-linear graph, dependencies between commands are explicitly enforced
+  // by sync points when enqueuing. Consequently, relax the command ordering in
+  // the command list can enable the backend to further optimize the workload
+  ZeCommandListDesc.flags = IsInOrder ? ZE_COMMAND_LIST_FLAG_IN_ORDER
+                                      : ZE_COMMAND_LIST_FLAG_RELAXED_ORDERING;
 
   ze_command_list_handle_t ZeCommandList;
   // TODO We could optimize this by pooling both Level Zero command-lists and UR
@@ -650,7 +644,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
 
   ZE2UR_CALL(zeKernelSetGroupSize, (Kernel->ZeKernel, WG[0], WG[1], WG[2]));
 
-  CommandBuffer->kernelsList.push_back(Kernel);
+  CommandBuffer->KernelsList.push_back(Kernel);
   // Increment the reference count of the Kernel and indicate that the Kernel
   // is in use. Once the event has been signaled, the code in
   // CleanupCompletedEvent(Event) will do a urKernelRelease to update the

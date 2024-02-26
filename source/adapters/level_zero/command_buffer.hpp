@@ -76,5 +76,5 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
   // List of kernels.
   // This list is needed to release all kernels retained by the
   // command_buffer.
-  std::vector<ur_kernel_handle_t> kernelsList;
+  std::vector<ur_kernel_handle_t> KernelsList;
 };
