@@ -118,7 +118,7 @@ ur_exp_command_buffer_handle_t_::ur_exp_command_buffer_handle_t_(
     : Context(Context), Device(Device), ZeCommandList(CommandList),
       ZeCommandListDesc(ZeDesc), ZeFencesList(), QueueProperties(),
       SyncPoints(), NextSyncPoint(0), IsInOrderCmdList(IsInOrderCmdList) {
-  IsProfilingEnabled = Desc->enableProfling;
+  IsProfilingEnabled = Desc->enableProfiling;
   urContextRetain(Context);
   urDeviceRetain(Device);
 }
@@ -543,10 +543,10 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
   // on command-buffer enqueue.
   auto RetCommandBuffer = *CommandBuffer;
   UR_CALL(EventCreate(Context, nullptr, false, false,
-                      CommandBuffer->IsProfilingEnabled,
+                      RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->SignalEvent));
   UR_CALL(EventCreate(Context, nullptr, false, false,
-                      CommandBuffer->IsProfilingEnabled,
+                      RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->WaitEvent));
 
   // Add prefix commands
