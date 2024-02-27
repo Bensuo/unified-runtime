@@ -1062,7 +1062,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
         SignalCommandList, false, false, true));
 
     if ((Queue->Properties & UR_QUEUE_FLAG_PROFILING_ENABLE) &&
-        (!CommandBuffer->IsInOrderCmdList)) {
+        (!CommandBuffer->IsInOrderCmdList) &&
+        (CommandBuffer->IsProfilingEnabled)) {
       // Multiple submissions of a command buffer implies that we need to save
       // the event timestamps before resubmiting the command buffer. We
       // therefore copy the these timestamps in a dedicated USM memory section
