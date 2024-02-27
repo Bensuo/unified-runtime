@@ -353,7 +353,7 @@ static ur_result_t enqueueCommandBufferMemCopyHelper(
     UR_CALL(getEventsFromSyncPoints(CommandBuffer, NumSyncPointsInWaitList,
                                     SyncPointWaitList, ZeEventList));
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, false,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = CommandType;
 
     // Get sync point and register the event with it.
@@ -427,7 +427,7 @@ static ur_result_t enqueueCommandBufferMemCopyRectHelper(
 
     ur_event_handle_t LaunchEvent;
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, false,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = CommandType;
 
     // Get sync point and register the event with it.
@@ -479,7 +479,7 @@ static ur_result_t enqueueCommandBufferFillHelper(
 
     ur_event_handle_t LaunchEvent;
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, true,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = CommandType;
 
     // Get sync point and register the event with it.
@@ -543,10 +543,10 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
   // on command-buffer enqueue.
   auto RetCommandBuffer = *CommandBuffer;
   UR_CALL(EventCreate(Context, nullptr, false, false,
-                      RetCommandBuffer->IsProfilingEnabled,
+                      !RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->SignalEvent));
   UR_CALL(EventCreate(Context, nullptr, false, false,
-                      RetCommandBuffer->IsProfilingEnabled,
+                      !RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->WaitEvent));
 
   // Add prefix commands
@@ -665,7 +665,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendKernelLaunchExp(
                                     SyncPointWaitList, ZeEventList));
     ur_event_handle_t LaunchEvent;
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, false,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = UR_COMMAND_KERNEL_LAUNCH;
 
     // Get sync point and register the event with it.
@@ -848,7 +848,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMPrefetchExp(
 
     ur_event_handle_t LaunchEvent;
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, true,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = UR_COMMAND_USM_PREFETCH;
 
     // Get sync point and register the event with it.
@@ -918,7 +918,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferAppendUSMAdviseExp(
 
     ur_event_handle_t LaunchEvent;
     UR_CALL(EventCreate(CommandBuffer->Context, nullptr, false, true,
-                        CommandBuffer->IsProfilingEnabled, &LaunchEvent));
+                        !CommandBuffer->IsProfilingEnabled, &LaunchEvent));
     LaunchEvent->CommandType = UR_COMMAND_USM_ADVISE;
 
     // Get sync point and register the event with it.
