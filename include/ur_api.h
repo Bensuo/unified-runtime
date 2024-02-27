@@ -7814,6 +7814,7 @@ typedef struct ur_exp_command_buffer_desc_t {
     const void *pNext;         ///< [in][optional] pointer to extension-specific structure
     ur_bool_t isUpdatable;     ///< [in] Commands in a finalized command-buffer can be updated.
     ur_bool_t isInOrder;       ///< [in] Command-buffer can be submitted to in-order command-list.
+    ur_bool_t enableProfiling; ///< [in] Command-buffer profiling is enabled.
 
 } ur_exp_command_buffer_desc_t;
 

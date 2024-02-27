@@ -82,6 +82,7 @@ constructed. The members defined in ${x}_exp_command_buffer_desc_t are:
 command-buffer commands`.
 * ``isInOrder``, which should be set to ``true`` to enable the graph workload
   to be submitted to an in-order command-list.
+* ``enableProfiling``, which should be set to ``true`` to enable graph profling.
 
 Command-buffers are reference counted and can be retained and released by
 calling ${x}CommandBufferRetainExp and ${x}CommandBufferReleaseExp respectively.

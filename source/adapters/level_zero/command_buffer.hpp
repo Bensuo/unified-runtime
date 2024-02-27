@@ -71,6 +71,8 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
   // Event which a command-buffer waits on until the wait-list dependencies
   // passed to a command-buffer enqueue have been satisfied.
   ur_event_handle_t WaitEvent = nullptr;
+  // Command-buffer profiling is enabled.
+  bool IsProfilingEnabled = false;
   // Command-buffer can be submitted to an in-order command-list.
   bool IsInOrderCmdList;
   // List of kernels.

@@ -115,7 +115,10 @@ members:
       desc: "[in] Commands in a finalized command-buffer can be updated."
     - type: $x_bool_t
       name: isInOrder
-      desc: "[in] Command-buffer can be submitted to in-order commandd-list."
+      desc: "[in] Command-buffer can be submitted to in-order command-list."
+    - type: $x_bool_t
+      name: enableProfiling
+      desc: "[in] Command-buffer profiling is enabled."
 --- #--------------------------------------------------------------------------
 type: struct
 desc: "Descriptor type for updating a kernel command memobj argument."
