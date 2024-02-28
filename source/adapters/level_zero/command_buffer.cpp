@@ -94,8 +94,9 @@ namespace {
 /// @param VersionBuild Build verion number to compare to.
 /// @return true is the version of the driver is higher than or equal to the
 /// compared version
-bool CheckDriverVersion(ur_context_handle_t Context, uint32_t VersionMajor,
-                        uint32_t VersionMinor, uint32_t VersionBuild) {
+bool IsDriverVersionNewerOrSimilar(ur_context_handle_t Context,
+                                   uint32_t VersionMajor, uint32_t VersionMinor,
+                                   uint32_t VersionBuild) {
   ZeStruct<ze_driver_properties_t> ZeDriverProperties;
   ZE2UR_CALL(zeDriverGetProperties,
              (Context->getPlatform()->ZeDriver, &ZeDriverProperties));
@@ -503,7 +504,7 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                          const ur_exp_command_buffer_desc_t *CommandBufferDesc,
                          ur_exp_command_buffer_handle_t *CommandBuffer) {
   // In-order command-lists are not available in old driver version.
-  bool CompatibleDriver = CheckDriverVersion(Context, 1, 3, 28454);
+  bool CompatibleDriver = IsDriverVersionNewerOrSimilar(Context, 1, 3, 28454);
   const bool IsInOrder =
       CompatibleDriver
           ? (CommandBufferDesc ? CommandBufferDesc->isInOrder : false)
