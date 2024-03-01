@@ -318,14 +318,10 @@ static ur_result_t getEventsFromSyncPoints(
     size_t NumSyncPointsInWaitList,
     const ur_exp_command_buffer_sync_point_t *SyncPointWaitList,
     std::vector<ze_event_handle_t> &ZeEventList) {
-  // Map of ur_exp_command_buffer_sync_point_t to ur_event_handle_t defining
-  // the event associated with each sync-point
-  auto SyncPoints = CommandBuffer->SyncPoints;
-
   // For each sync-point add associated L0 event to the return list.
   for (size_t i = 0; i < NumSyncPointsInWaitList; i++) {
-    if (auto EventHandle = SyncPoints.find(SyncPointWaitList[i]);
-        EventHandle != SyncPoints.end()) {
+    if (auto EventHandle = CommandBuffer->SyncPoints.find(SyncPointWaitList[i]);
+        EventHandle != CommandBuffer->SyncPoints.end()) {
       ZeEventList.push_back(EventHandle->second->ZeEvent);
     } else {
       return UR_RESULT_ERROR_INVALID_VALUE;
