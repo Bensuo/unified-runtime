@@ -116,6 +116,9 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
   if (ZeCommandList) {
     ZE_CALL_NOCHECK(zeCommandListDestroy, (ZeCommandList));
   }
+  if (ZeCopyCommandList) {
+    ZE_CALL_NOCHECK(zeCommandListDestroy, (ZeCopyCommandList));
+  }
 
   // Release additional signal and wait events used by command_buffer
   if (SignalEvent) {
@@ -307,6 +310,7 @@ static ur_result_t enqueueCommandBufferMemCopyHelper(
   ze_command_list_handle_t ZeCommandList = CommandBuffer->ZeCommandList;
   if (CommandBuffer->MUseCopyEngine) {
     ZeCommandList = CommandBuffer->ZeCopyCommandList;
+    CommandBuffer->MCopyCommandListEmpty = false;
   }
 
   ZE2UR_CALL(zeCommandListAppendMemoryCopy,
@@ -378,6 +382,7 @@ static ur_result_t enqueueCommandBufferMemCopyRectHelper(
   ze_command_list_handle_t ZeCommandList = CommandBuffer->ZeCommandList;
   if (CommandBuffer->MUseCopyEngine) {
     ZeCommandList = CommandBuffer->ZeCopyCommandList;
+    CommandBuffer->MCopyCommandListEmpty = false;
   }
 
   ZE2UR_CALL(zeCommandListAppendMemoryCopyRegion,
@@ -412,6 +417,7 @@ static ur_result_t enqueueCommandBufferFillHelper(
       ZeCommandList = CommandBuffer->ZeCommandList;
     } else {
       ZeCommandList = CommandBuffer->ZeCopyCommandList;
+      CommandBuffer->MCopyCommandListEmpty = false;
     }
   } else {
     // Pattern size must fit the compute queue capabilities.
@@ -990,7 +996,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   ZE2UR_CALL(zeCommandQueueExecuteCommandLists,
              (ZeCommandQueue, 1, &CommandBuffer->ZeCommandList, ZeFence));
 
-  if (CommandBuffer->MUseCopyEngine) {
+  if ((CommandBuffer->MUseCopyEngine) &&
+      (!CommandBuffer->MCopyCommandListEmpty)) {
     ze_fence_handle_t ZeCopyFence;
     ZeStruct<ze_fence_desc_t> ZeCopyFenceDesc;
     auto &QGroupCopy = Queue->getQueueGroup(true);
@@ -1010,10 +1017,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
   ur_command_list_ptr_t SignalCommandList{};
   UR_CALL(Queue->Context->getAvailableCommandList(Queue, SignalCommandList,
                                                   false, false));
-  // Reset the wait-event for the UR command-buffer that is signaled when its
-  // submission dependencies have been satisfied.
-  ZE2UR_CALL(zeCommandListAppendEventReset,
-             (SignalCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
 
   if (Event) {
     UR_CALL(createEventAndAssociateQueue(
@@ -1046,6 +1049,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
                   &(CommandBuffer->SignalEvent->ZeEvent)));
     }
   }
+
+  // Reset the wait-event for the UR command-buffer that is signaled when its
+  // submission dependencies have been satisfied.
+  ZE2UR_CALL(zeCommandListAppendEventReset,
+             (SignalCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
 
   Queue->executeCommandList(SignalCommandList, false, false);
 

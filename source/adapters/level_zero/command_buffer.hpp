@@ -58,6 +58,7 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
   // Level Zero Copy command list descriptor
   ZeStruct<ze_command_list_desc_t> ZeCopyCommandListDesc;
   bool MUseCopyEngine = false;
+  bool MCopyCommandListEmpty = true;
   // List of Level Zero fences created when submitting a graph.
   // This list is needed to release all fences retained by the
   // command_buffer.
