@@ -169,8 +169,8 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
       // some other thread) then release referenced memory allocations. As a
       // result, memory can be deallocated and context can be removed from
       // container in the platform. That's why we need to lock a mutex here.
-      ur_platform_handle_t Plt = Kernel->Program->Context->getPlatform();
-      std::scoped_lock<ur_shared_mutex> ContextsLock(Plt->ContextsMutex);
+      ur_platform_handle_t Platform = Kernel->Program->Context->getPlatform();
+      std::scoped_lock<ur_shared_mutex> ContextsLock(Platform->ContextsMutex);
 
       if (--Kernel->SubmissionsCount == 0) {
         // Kernel is not submitted for execution, release referenced memory
