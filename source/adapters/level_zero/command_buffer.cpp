@@ -7,6 +7,9 @@
 // See LICENSE.TXT SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
+
+#define DISABLE_COPY_CMDLIST 0
+
 #include "command_buffer.hpp"
 #include "ur_level_zero.hpp"
 
@@ -508,6 +511,7 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
   // Create a list for copy commands
   ze_command_list_handle_t ZeCopyCommandList;
   ZeStruct<ze_command_list_desc_t> ZeCopyCommandListDesc;
+#if DISABLE_COPY_CMDLIST == 1
   if (Device->hasMainCopyEngine()) {
     uint32_t QueueGroupOrdinalCopy =
         Device
@@ -527,6 +531,7 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                (Context->ZeContext, Device->ZeDevice, &ZeCopyCommandListDesc,
                 &ZeCopyCommandList));
   }
+#endif
 
   try {
     *CommandBuffer = new ur_exp_command_buffer_handle_t_(
@@ -563,12 +568,15 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
       zeCommandListAppendBarrier,
       (ZeCommandList, nullptr, PrecondEvents.size(), PrecondEvents.data()));
 
+#if DISABLE_COPY_CMDLIST == 1
   if (Device->hasMainCopyEngine()) {
     RetCommandBuffer->MUseCopyEngine = true;
     ZE2UR_CALL(
         zeCommandListAppendBarrier,
         (ZeCopyCommandList, nullptr, 1, &RetCommandBuffer->WaitEvent->ZeEvent));
   }
+#endif
+
   return UR_RESULT_SUCCESS;
 }
 
