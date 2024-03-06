@@ -756,7 +756,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urExtEventCreate(
     ur_event_handle_t
         *Event ///< [out] pointer to the handle of the event object created.
 ) {
-  UR_CALL(EventCreate(Context, nullptr, false, true, Event));
+  UR_CALL(EventCreate(Context, nullptr, false, true, false, Event));
 
   (*Event)->RefCountExternal++;
   ZE2UR_CALL(zeEventHostSignal, ((*Event)->ZeEvent));
@@ -774,7 +774,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urEventCreateWithNativeHandle(
   // we dont have urEventCreate, so use this check for now to know that
   // the call comes from urEventCreate()
   if (NativeEvent == nullptr) {
-    UR_CALL(EventCreate(Context, nullptr, false, true, Event));
+    UR_CALL(EventCreate(Context, nullptr, false, true, false, Event));
 
     (*Event)->RefCountExternal++;
     ZE2UR_CALL(zeEventHostSignal, ((*Event)->ZeEvent));
@@ -1053,9 +1053,11 @@ ur_result_t CleanupCompletedEvent(ur_event_handle_t Event, bool QueueLocked,
 //
 ur_result_t EventCreate(ur_context_handle_t Context, ur_queue_handle_t Queue,
                         bool IsMultiDevice, bool HostVisible,
+                        bool ForceDisableProfiling,
                         ur_event_handle_t *RetEvent) {
 
-  bool ProfilingEnabled = !Queue || Queue->isProfilingEnabled();
+  bool ProfilingEnabled =
+      ForceDisableProfiling ? false : (!Queue || Queue->isProfilingEnabled());
 
   ur_device_handle_t Device = nullptr;
 
