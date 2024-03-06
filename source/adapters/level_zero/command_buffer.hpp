@@ -30,6 +30,8 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
       ze_command_list_handle_t CommandList,
       ze_command_list_handle_t CommandListResetEvents,
       ZeStruct<ze_command_list_desc_t> ZeDesc,
+      ze_command_list_handle_t CopyCommandList,
+      ZeStruct<ze_command_list_desc_t> ZeCopyDesc,
       const ur_exp_command_buffer_desc_t *Desc, const bool IsInOrderCmdList);
 
   ~ur_exp_command_buffer_handle_t_();
@@ -54,6 +56,12 @@ struct ur_exp_command_buffer_handle_t_ : public _ur_object {
   ze_command_list_handle_t ZeCommandListResetEvents;
   // Level Zero command list descriptor
   ZeStruct<ze_command_list_desc_t> ZeCommandListDesc;
+  // Level Zero Copy command list handle
+  ze_command_list_handle_t ZeCopyCommandList;
+  // Level Zero Copy command list descriptor
+  ZeStruct<ze_command_list_desc_t> ZeCopyCommandListDesc;
+  bool MUseCopyEngine = false;
+  bool MCopyCommandListEmpty = true;
   // List of Level Zero fences created when submitting a graph.
   // This list is needed to release all fences retained by the
   // command_buffer.
