@@ -549,6 +549,7 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
                       !RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->WaitEvent));
   UR_CALL(EventCreate(Context, nullptr, false, false,
+                      !RetCommandBuffer->IsProfilingEnabled,
                       &RetCommandBuffer->AllResetEvent));
 
   // Add prefix commands
