@@ -74,7 +74,7 @@ ur_exp_command_buffer_handle_t_::~ur_exp_command_buffer_handle_t_() {
   if (ZeCommandList) {
     ZE_CALL_NOCHECK(zeCommandListDestroy, (ZeCommandList));
   }
-  if (ZeCopyCommandList) {
+  if (MUseCopyEngine && ZeCopyCommandList) {
     ZE_CALL_NOCHECK(zeCommandListDestroy, (ZeCopyCommandList));
   }
 
@@ -487,14 +487,17 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
       Device->QueueGroup[ur_device_handle_t_::queue_group_info_t::type::Compute]
           .ZeOrdinal;
 
-  ZeStruct<ze_command_list_desc_t> ZeCommandListDesc;
-  ZeCommandListDesc.commandQueueGroupOrdinal = QueueGroupOrdinal;
+  ZeStruct<ze_command_list_desc_t> ZeCommandListResetDesc;
+  ZeCommandListResetDesc.commandQueueGroupOrdinal = QueueGroupOrdinal;
 
   ze_command_list_handle_t ZeCommandListResetEvents;
   // Create a command-list for reseting the events associated to enqueued cmd.
   ZE2UR_CALL(zeCommandListCreate,
-             (Context->ZeContext, Device->ZeDevice, &ZeCommandListDesc,
+             (Context->ZeContext, Device->ZeDevice, &ZeCommandListResetDesc,
               &ZeCommandListResetEvents));
+
+  ZeStruct<ze_command_list_desc_t> ZeCommandListDesc;
+  ZeCommandListDesc.commandQueueGroupOrdinal = QueueGroupOrdinal;
 
   // For non-linear graph, dependencies between commands are explicitly enforced
   // by sync points when enqueuing. Consequently, relax the command ordering in
@@ -571,9 +574,9 @@ urCommandBufferCreateExp(ur_context_handle_t Context, ur_device_handle_t Device,
 #if DISABLE_COPY_CMDLIST == 1
   if (Device->hasMainCopyEngine()) {
     RetCommandBuffer->MUseCopyEngine = true;
-    ZE2UR_CALL(
-        zeCommandListAppendBarrier,
-        (ZeCopyCommandList, nullptr, 1, &RetCommandBuffer->WaitEvent->ZeEvent));
+    ZE2UR_CALL(zeCommandListAppendBarrier,
+               (ZeCopyCommandList, nullptr, PrecondEvents.size(),
+                PrecondEvents.data()));
   }
 #endif
 
@@ -1141,11 +1144,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urCommandBufferEnqueueExp(
                   &(CommandBuffer->SignalEvent->ZeEvent)));
     }
   }
-
-  // Reset the wait-event for the UR command-buffer that is signaled when its
-  // submission dependencies have been satisfied.
-  ZE2UR_CALL(zeCommandListAppendEventReset,
-             (SignalCommandList->first, CommandBuffer->WaitEvent->ZeEvent));
 
   Queue->executeCommandList(SignalCommandList, false, false);
 
