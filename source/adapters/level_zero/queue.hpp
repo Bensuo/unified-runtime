@@ -886,9 +886,7 @@ template <typename QueueT> QueueT GetQueue(ur_queue_handle_t Queue) {
   if (!Queue)
     return nullptr;
   auto *Q = dynamic_cast<QueueT>(Queue);
-  if (!Q) {
-    throw UR_RESULT_ERROR_INVALID_QUEUE;
-  }
+  assert(Q && "Dynamic cast of queue handle failed");
   return Q;
 }
 
