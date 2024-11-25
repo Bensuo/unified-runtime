@@ -15,16 +15,28 @@ int main() {
     uint32_t A = 42;
 
     sycl_queue.submit([&](sycl::handler &cgh) {
-        sycl::local_accessor<uint32_t, 1> local_mem(local_size, cgh);
-        cgh.parallel_for<class saxpy_usm_local_mem>(
+        sycl::local_accessor<uint32_t, 1> local_mem_A(local_size, cgh);
+        sycl::local_accessor<uint32_t, 1> local_mem_B(local_size * 2, cgh);
+        cgh.parallel_for(
             sycl::nd_range<1>{{array_size}, {local_size}},
             [=](sycl::nd_item<1> itemId) {
-                auto i = itemId.get_global_linear_id();
-                auto local_id = itemId.get_local_linear_id();
-                local_mem[local_id] = i;
-                Z[i] = A * X[i] + Y[i] + local_mem[local_id] +
-                       itemId.get_local_range(0);
+               /* Kernel Code */
             });
     });
+
+
+    __global__ void kernel(unsigned OffsetA, unsigned OffsetB) {
+      extern __shared__ int LocalMem[];
+      int *OffsetLocalPtr1 = &LocalMem[Offset1];
+      int *OffsetLocalPtr2 = &LocalMem[Offset2];
+      /* Kernel Code */
+    }
+
+
+}
+
+
+
+
     return 0;
 }
