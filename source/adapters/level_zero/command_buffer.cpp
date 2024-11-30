@@ -1327,6 +1327,18 @@ ur_result_t validateCommandDesc(
           ->mutableCommandFlags;
   logger::debug("Mutable features supported by device {}", SupportedFeatures);
 
+  if (CommandDesc->pNewGlobalWorkSize) {
+    logger::debug(
+        "UR GWS Update ({} {} {})", CommandDesc->pNewGlobalWorkSize[0],
+        CommandDesc->pNewGlobalWorkSize[1], CommandDesc->pNewGlobalWorkSize[2]);
+  }
+
+  if (CommandDesc->pNewLocalWorkSize) {
+    logger::debug("UR LWS Update({} {} {})", CommandDesc->pNewLocalWorkSize[0],
+                  CommandDesc->pNewLocalWorkSize[1],
+                  CommandDesc->pNewLocalWorkSize[2]);
+  }
+
   uint32_t Dim = CommandDesc->newWorkDim;
   if (Dim != 0) {
     // Error if work dim changes
