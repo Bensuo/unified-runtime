@@ -14,15 +14,16 @@ std::unordered_map<ur_usm_pool_info_t, size_t> pool_info_size_map = {
 using urUSMPoolGetInfoTestWithInfoParam =
     uur::urUSMPoolTestWithParam<ur_usm_pool_info_t>;
 
-UUR_TEST_SUITE_P(urUSMPoolGetInfoTestWithInfoParam,
-                 ::testing::Values(UR_USM_POOL_INFO_CONTEXT,
-                                   UR_USM_POOL_INFO_REFERENCE_COUNT),
-                 uur::deviceTestWithParamPrinter<ur_usm_pool_info_t>);
+UUR_DEVICE_TEST_SUITE_P(urUSMPoolGetInfoTestWithInfoParam,
+                        ::testing::Values(UR_USM_POOL_INFO_CONTEXT,
+                                          UR_USM_POOL_INFO_REFERENCE_COUNT),
+                        uur::deviceTestWithParamPrinter<ur_usm_pool_info_t>);
 
 TEST_P(urUSMPoolGetInfoTestWithInfoParam, Success) {
     ur_usm_pool_info_t info_type = getParam();
     size_t size = 0;
-    ASSERT_SUCCESS(urUSMPoolGetInfo(pool, info_type, 0, nullptr, &size));
+    ASSERT_SUCCESS_OR_OPTIONAL_QUERY(
+        urUSMPoolGetInfo(pool, info_type, 0, nullptr, &size), info_type);
     ASSERT_NE(size, 0);
 
     if (const auto expected_size = pool_info_size_map.find(info_type);

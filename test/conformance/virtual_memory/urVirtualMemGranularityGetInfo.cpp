@@ -7,6 +7,8 @@
 struct urVirtualMemGranularityGetInfoTest
     : uur::urContextTestWithParam<ur_virtual_mem_granularity_info_t> {
     void SetUp() override {
+        UUR_KNOWN_FAILURE_ON(uur::LevelZeroV2{});
+
         UUR_RETURN_ON_FATAL_FAILURE(
             urContextTestWithParam<ur_virtual_mem_granularity_info_t>::SetUp());
         ur_bool_t virtual_memory_support = false;
@@ -19,7 +21,7 @@ struct urVirtualMemGranularityGetInfoTest
     }
 };
 
-UUR_TEST_SUITE_P(
+UUR_DEVICE_TEST_SUITE_P(
     urVirtualMemGranularityGetInfoTest,
     ::testing::Values(UR_VIRTUAL_MEM_GRANULARITY_INFO_MINIMUM,
                       UR_VIRTUAL_MEM_GRANULARITY_INFO_RECOMMENDED),
@@ -28,8 +30,10 @@ UUR_TEST_SUITE_P(
 TEST_P(urVirtualMemGranularityGetInfoTest, Success) {
     size_t size = 0;
     ur_virtual_mem_granularity_info_t info = getParam();
-    ASSERT_SUCCESS(urVirtualMemGranularityGetInfo(context, device, info, 0,
-                                                  nullptr, &size));
+    ASSERT_SUCCESS_OR_OPTIONAL_QUERY(
+        urVirtualMemGranularityGetInfo(context, device, info, 0, nullptr,
+                                       &size),
+        info);
     ASSERT_NE(size, 0);
 
     std::vector<uint8_t> infoData(size);

@@ -13,6 +13,7 @@
 #include "ur_loader.hpp"
 
 namespace ur_loader {
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Intercept function for urAdapterGet
 __urdlllocal ur_result_t UR_APICALL urAdapterGet(
@@ -85,6 +86,9 @@ __urdlllocal ur_result_t UR_APICALL urAdapterRelease(
     // forward to device-platform
     result = pfnAdapterRelease(hAdapter);
 
+    // release loader handle
+    context->factories.ur_adapter_factory.release(hAdapter);
+
     return result;
 }
 
@@ -109,6 +113,9 @@ __urdlllocal ur_result_t UR_APICALL urAdapterRetain(
 
     // forward to device-platform
     result = pfnAdapterRetain(hAdapter);
+
+    // increment refcount of handle
+    context->factories.ur_adapter_factory.retain(hAdapter);
 
     return result;
 }
@@ -289,9 +296,42 @@ __urdlllocal ur_result_t UR_APICALL urPlatformGetInfo(
     // convert loader handle to platform handle
     hPlatform = reinterpret_cast<ur_platform_object_t *>(hPlatform)->handle;
 
+    // this value is needed for converting adapter handles to loader handles
+    size_t sizeret = 0;
+    if (pPropSizeRet == NULL) {
+        pPropSizeRet = &sizeret;
+    }
+
     // forward to device-platform
     result =
         pfnGetInfo(hPlatform, propName, propSize, pPropValue, pPropSizeRet);
+
+    if (UR_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    try {
+        if (pPropValue != nullptr) {
+            switch (propName) {
+            case UR_PLATFORM_INFO_ADAPTER: {
+                ur_adapter_handle_t *handles =
+                    reinterpret_cast<ur_adapter_handle_t *>(pPropValue);
+                size_t nelements = *pPropSizeRet / sizeof(ur_adapter_handle_t);
+                for (size_t i = 0; i < nelements; ++i) {
+                    if (handles[i] != nullptr) {
+                        handles[i] = reinterpret_cast<ur_adapter_handle_t>(
+                            context->factories.ur_adapter_factory.getInstance(
+                                handles[i], dditable));
+                    }
+                }
+            } break;
+            default: {
+            } break;
+            }
+        }
+    } catch (std::bad_alloc &) {
+        result = UR_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
 
     return result;
 }
@@ -614,6 +654,9 @@ __urdlllocal ur_result_t UR_APICALL urDeviceRetain(
     // forward to device-platform
     result = pfnRetain(hDevice);
 
+    // increment refcount of handle
+    context->factories.ur_device_factory.retain(hDevice);
+
     return result;
 }
 
@@ -639,6 +682,9 @@ __urdlllocal ur_result_t UR_APICALL urDeviceRelease(
 
     // forward to device-platform
     result = pfnRelease(hDevice);
+
+    // release loader handle
+    context->factories.ur_device_factory.release(hDevice);
 
     return result;
 }
@@ -910,6 +956,9 @@ __urdlllocal ur_result_t UR_APICALL urContextRetain(
     // forward to device-platform
     result = pfnRetain(hContext);
 
+    // increment refcount of handle
+    context->factories.ur_context_factory.retain(hContext);
+
     return result;
 }
 
@@ -935,6 +984,9 @@ __urdlllocal ur_result_t UR_APICALL urContextRelease(
 
     // forward to device-platform
     result = pfnRelease(hContext);
+
+    // release loader handle
+    context->factories.ur_context_factory.release(hContext);
 
     return result;
 }
@@ -1238,6 +1290,9 @@ __urdlllocal ur_result_t UR_APICALL urMemRetain(
     // forward to device-platform
     result = pfnRetain(hMem);
 
+    // increment refcount of handle
+    context->factories.ur_mem_factory.retain(hMem);
+
     return result;
 }
 
@@ -1263,6 +1318,9 @@ __urdlllocal ur_result_t UR_APICALL urMemRelease(
 
     // forward to device-platform
     result = pfnRelease(hMem);
+
+    // release loader handle
+    context->factories.ur_mem_factory.release(hMem);
 
     return result;
 }
@@ -1615,6 +1673,9 @@ __urdlllocal ur_result_t UR_APICALL urSamplerRetain(
     // forward to device-platform
     result = pfnRetain(hSampler);
 
+    // increment refcount of handle
+    context->factories.ur_sampler_factory.retain(hSampler);
+
     return result;
 }
 
@@ -1640,6 +1701,9 @@ __urdlllocal ur_result_t UR_APICALL urSamplerRelease(
 
     // forward to device-platform
     result = pfnRelease(hSampler);
+
+    // release loader handle
+    context->factories.ur_sampler_factory.release(hSampler);
 
     return result;
 }
@@ -2074,6 +2138,9 @@ __urdlllocal ur_result_t UR_APICALL urUSMPoolRetain(
     // forward to device-platform
     result = pfnPoolRetain(pPool);
 
+    // increment refcount of handle
+    context->factories.ur_usm_pool_factory.retain(pPool);
+
     return result;
 }
 
@@ -2098,6 +2165,9 @@ __urdlllocal ur_result_t UR_APICALL urUSMPoolRelease(
 
     // forward to device-platform
     result = pfnPoolRelease(pPool);
+
+    // release loader handle
+    context->factories.ur_usm_pool_factory.release(pPool);
 
     return result;
 }
@@ -2484,6 +2554,9 @@ __urdlllocal ur_result_t UR_APICALL urPhysicalMemRetain(
     // forward to device-platform
     result = pfnRetain(hPhysicalMem);
 
+    // increment refcount of handle
+    context->factories.ur_physical_mem_factory.retain(hPhysicalMem);
+
     return result;
 }
 
@@ -2511,6 +2584,9 @@ __urdlllocal ur_result_t UR_APICALL urPhysicalMemRelease(
 
     // forward to device-platform
     result = pfnRelease(hPhysicalMem);
+
+    // release loader handle
+    context->factories.ur_physical_mem_factory.release(hPhysicalMem);
 
     return result;
 }
@@ -2843,6 +2919,9 @@ __urdlllocal ur_result_t UR_APICALL urProgramRetain(
     // forward to device-platform
     result = pfnRetain(hProgram);
 
+    // increment refcount of handle
+    context->factories.ur_program_factory.retain(hProgram);
+
     return result;
 }
 
@@ -2868,6 +2947,9 @@ __urdlllocal ur_result_t UR_APICALL urProgramRelease(
 
     // forward to device-platform
     result = pfnRelease(hProgram);
+
+    // release loader handle
+    context->factories.ur_program_factory.release(hProgram);
 
     return result;
 }
@@ -3466,6 +3548,9 @@ __urdlllocal ur_result_t UR_APICALL urKernelRetain(
     // forward to device-platform
     result = pfnRetain(hKernel);
 
+    // increment refcount of handle
+    context->factories.ur_kernel_factory.retain(hKernel);
+
     return result;
 }
 
@@ -3491,6 +3576,9 @@ __urdlllocal ur_result_t UR_APICALL urKernelRelease(
 
     // forward to device-platform
     result = pfnRelease(hKernel);
+
+    // release loader handle
+    context->factories.ur_kernel_factory.release(hKernel);
 
     return result;
 }
@@ -3942,6 +4030,9 @@ __urdlllocal ur_result_t UR_APICALL urQueueRetain(
     // forward to device-platform
     result = pfnRetain(hQueue);
 
+    // increment refcount of handle
+    context->factories.ur_queue_factory.retain(hQueue);
+
     return result;
 }
 
@@ -3967,6 +4058,9 @@ __urdlllocal ur_result_t UR_APICALL urQueueRelease(
 
     // forward to device-platform
     result = pfnRelease(hQueue);
+
+    // release loader handle
+    context->factories.ur_queue_factory.release(hQueue);
 
     return result;
 }
@@ -4272,6 +4366,9 @@ __urdlllocal ur_result_t UR_APICALL urEventRetain(
     // forward to device-platform
     result = pfnRetain(hEvent);
 
+    // increment refcount of handle
+    context->factories.ur_event_factory.retain(hEvent);
+
     return result;
 }
 
@@ -4296,6 +4393,9 @@ __urdlllocal ur_result_t UR_APICALL urEventRelease(
 
     // forward to device-platform
     result = pfnRelease(hEvent);
+
+    // release loader handle
+    context->factories.ur_event_factory.release(hEvent);
 
     return result;
 }
@@ -4377,6 +4477,22 @@ __urdlllocal ur_result_t UR_APICALL urEventCreateWithNativeHandle(
     return result;
 }
 
+namespace {
+struct event_callback_wrapper_data_t {
+    ur_event_callback_t fn;
+    ur_event_handle_t event;
+    void *userData;
+};
+
+void event_callback_wrapper([[maybe_unused]] ur_event_handle_t hEvent,
+                            ur_execution_info_t execStatus, void *pUserData) {
+    auto *wrapper =
+        reinterpret_cast<event_callback_wrapper_data_t *>(pUserData);
+    (wrapper->fn)(wrapper->event, execStatus, wrapper->userData);
+    delete wrapper;
+}
+} // namespace
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Intercept function for urEventSetCallback
 __urdlllocal ur_result_t UR_APICALL urEventSetCallback(
@@ -4389,6 +4505,13 @@ __urdlllocal ur_result_t UR_APICALL urEventSetCallback(
     ur_result_t result = UR_RESULT_SUCCESS;
 
     [[maybe_unused]] auto context = getContext();
+
+    // Replace the callback with a wrapper function that gives the callback the loader event rather than a
+    // backend-specific event
+    auto wrapper_data =
+        new event_callback_wrapper_data_t{pfnNotify, hEvent, pUserData};
+    pUserData = wrapper_data;
+    pfnNotify = event_callback_wrapper;
 
     // extract platform's function pointer table
     auto dditable = reinterpret_cast<ur_event_object_t *>(hEvent)->dditable;
@@ -6829,6 +6952,9 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesReleaseExternalMemoryExp(
     // forward to device-platform
     result = pfnReleaseExternalMemoryExp(hContext, hDevice, hExternalMem);
 
+    // release loader handle
+    context->factories.ur_exp_external_mem_factory.release(hExternalMem);
+
     return result;
 }
 
@@ -6918,6 +7044,10 @@ __urdlllocal ur_result_t UR_APICALL urBindlessImagesReleaseExternalSemaphoreExp(
     // forward to device-platform
     result =
         pfnReleaseExternalSemaphoreExp(hContext, hDevice, hExternalSemaphore);
+
+    // release loader handle
+    context->factories.ur_exp_external_semaphore_factory.release(
+        hExternalSemaphore);
 
     return result;
 }
@@ -7146,6 +7276,9 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferRetainExp(
     // forward to device-platform
     result = pfnRetainExp(hCommandBuffer);
 
+    // increment refcount of handle
+    context->factories.ur_exp_command_buffer_factory.retain(hCommandBuffer);
+
     return result;
 }
 
@@ -7175,6 +7308,9 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferReleaseExp(
 
     // forward to device-platform
     result = pfnReleaseExp(hCommandBuffer);
+
+    // release loader handle
+    context->factories.ur_exp_command_buffer_factory.release(hCommandBuffer);
 
     return result;
 }
@@ -8492,6 +8628,9 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferRetainCommandExp(
     // forward to device-platform
     result = pfnRetainCommandExp(hCommand);
 
+    // increment refcount of handle
+    context->factories.ur_exp_command_buffer_command_factory.retain(hCommand);
+
     return result;
 }
 
@@ -8522,6 +8661,9 @@ __urdlllocal ur_result_t UR_APICALL urCommandBufferReleaseCommandExp(
 
     // forward to device-platform
     result = pfnReleaseCommandExp(hCommand);
+
+    // release loader handle
+    context->factories.ur_exp_command_buffer_command_factory.release(hCommand);
 
     return result;
 }
@@ -8844,6 +8986,7 @@ __urdlllocal ur_result_t UR_APICALL urEnqueueCooperativeKernelLaunchExp(
 /// @brief Intercept function for urKernelSuggestMaxCooperativeGroupCountExp
 __urdlllocal ur_result_t UR_APICALL urKernelSuggestMaxCooperativeGroupCountExp(
     ur_kernel_handle_t hKernel, ///< [in] handle of the kernel object
+    ur_device_handle_t hDevice, ///< [in] handle of the device object
     uint32_t
         workDim, ///< [in] number of dimensions, from 1 to 3, to specify the work-group
                  ///< work-items
@@ -8871,9 +9014,12 @@ __urdlllocal ur_result_t UR_APICALL urKernelSuggestMaxCooperativeGroupCountExp(
     // convert loader handle to platform handle
     hKernel = reinterpret_cast<ur_kernel_object_t *>(hKernel)->handle;
 
+    // convert loader handle to platform handle
+    hDevice = reinterpret_cast<ur_device_object_t *>(hDevice)->handle;
+
     // forward to device-platform
     result = pfnSuggestMaxCooperativeGroupCountExp(
-        hKernel, workDim, pLocalWorkSize, dynamicSharedMemorySize,
+        hKernel, hDevice, workDim, pLocalWorkSize, dynamicSharedMemorySize,
         pGroupCountRet);
 
     return result;

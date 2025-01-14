@@ -14,52 +14,46 @@
 #include <ur_api.h>
 namespace uur {
 
-struct PlatformEnvironment : ::testing::Environment {
+struct AdapterEnvironment : ::testing::Environment {
+    AdapterEnvironment();
+    virtual ~AdapterEnvironment() override = default;
 
-    struct PlatformOptions {
-        std::string platform_name;
-        std::optional<ur_platform_backend_t> platform_backend;
-        unsigned long platforms_count = 0;
-    };
+    std::string error{};
+    std::vector<ur_adapter_handle_t> adapters{};
+    static AdapterEnvironment *instance;
+};
 
-    PlatformEnvironment(int argc, char **argv);
+struct PlatformEnvironment : AdapterEnvironment {
+    PlatformEnvironment();
     virtual ~PlatformEnvironment() override = default;
 
     virtual void SetUp() override;
     virtual void TearDown() override;
 
-    void selectPlatformFromOptions();
-    PlatformOptions parsePlatformOptions(int argc, char **argv);
+    void populatePlatforms();
 
-    std::string error{};
-    PlatformOptions platform_options;
-    std::vector<ur_adapter_handle_t> adapters{};
-    ur_adapter_handle_t adapter = nullptr;
-    ur_platform_handle_t platform = nullptr;
+    std::vector<ur_platform_handle_t> platforms;
     static PlatformEnvironment *instance;
 };
 
+struct DeviceTuple {
+    ur_device_handle_t device;
+    ur_platform_handle_t platform;
+    ur_adapter_handle_t adapter;
+};
+
 struct DevicesEnvironment : PlatformEnvironment {
-
-    struct DeviceOptions {
-        std::string device_name;
-        unsigned long devices_count = 0;
-    };
-
-    DevicesEnvironment(int argc, char **argv);
+    DevicesEnvironment();
     virtual ~DevicesEnvironment() override = default;
 
     virtual void SetUp() override;
     virtual void TearDown() override;
 
-    DeviceOptions parseDeviceOptions(int argc, char **argv);
-
-    inline const std::vector<ur_device_handle_t> &GetDevices() const {
+    inline const std::vector<DeviceTuple> &GetDevices() const {
         return devices;
     }
 
-    DeviceOptions device_options;
-    std::vector<ur_device_handle_t> devices;
+    std::vector<DeviceTuple> devices;
     ur_device_handle_t device = nullptr;
     static DevicesEnvironment *instance;
 };
@@ -77,6 +71,7 @@ struct KernelsEnvironment : DevicesEnvironment {
     virtual void TearDown() override;
 
     void LoadSource(const std::string &kernel_name,
+                    ur_platform_handle_t platform,
                     std::shared_ptr<std::vector<char>> &binary_out);
 
     ur_result_t CreateProgram(ur_platform_handle_t hPlatform,
@@ -93,8 +88,9 @@ struct KernelsEnvironment : DevicesEnvironment {
   private:
     KernelOptions parseKernelOptions(int argc, char **argv,
                                      const std::string &kernels_default_dir);
-    std::string getKernelSourcePath(const std::string &kernel_name);
-    std::string getTargetName();
+    std::string getKernelSourcePath(const std::string &kernel_name,
+                                    ur_platform_handle_t platform);
+    std::string getTargetName(ur_platform_handle_t platform);
 
     KernelOptions kernel_options;
     // mapping between kernels (full_path + kernel_name) and their saved source.

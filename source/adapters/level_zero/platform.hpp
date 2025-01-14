@@ -96,6 +96,12 @@ struct ur_platform_handle_t_ : public _ur_platform {
   // associated with particular Level Zero driver, store this extension here.
   struct ZeMutableCmdListExtension {
     bool Supported = false;
+    // If LoaderExtension is true, the L0 loader is aware of the MCL extension.
+    // If it is false, the extension has to be loaded directly from the driver
+    // using zeDriverGetExtensionFunctionAddress. If it is loaded directly from
+    // the driver, any handles passed to it must be translated using
+    // zelLoaderTranslateHandle.
+    bool LoaderExtension = false;
     ze_result_t (*zexCommandListGetNextCommandIdExp)(
         ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *,
         uint64_t *) = nullptr;
@@ -134,4 +140,11 @@ struct ur_platform_handle_t_ : public _ur_platform {
     ze_result_t (*zexDeviceReleaseExternalSemaphoreExp)(
         ze_intel_external_semaphore_exp_handle_t);
   } ZeExternalSemaphoreExt;
+
+  struct ZeCommandListImmediateAppendExtension {
+    bool Supported = false;
+    ze_result_t (*zeCommandListImmediateAppendCommandListsExp)(
+        ze_command_list_handle_t, uint32_t, ze_command_list_handle_t *,
+        ze_event_handle_t, uint32_t, ze_event_handle_t *);
+  } ZeCommandListImmediateAppendExt;
 };

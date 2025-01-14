@@ -11,7 +11,7 @@ struct KernelFunctor {
 
     auto get(sycl::ext::oneapi::experimental::properties_tag) {
         return sycl::ext::oneapi::experimental::properties{
-            sycl::ext::oneapi::experimental::work_group_size<4, 4, 4>};
+            sycl::ext::oneapi::experimental::work_group_size<8, 4, 2>};
     }
 };
 

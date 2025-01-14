@@ -13,6 +13,7 @@
 #include "context.hpp"
 #include "kernel.hpp"
 #include "memory.hpp"
+#include "queue_api.hpp"
 
 #include "../device.hpp"
 #include "../helpers/kernel_helpers.hpp"
@@ -512,10 +513,11 @@ ur_result_t urKernelGetGroupInfo(
         ZE_CALL_NOCHECK(zeKernelGetProperties, (zeDevice, &kernelProperties));
     if (zeResult == ZE_RESULT_SUCCESS &&
         workGroupProperties.maxGroupSize != 0) {
-      return returnValue(workGroupProperties.maxGroupSize);
+      // Specification states this returns a size_t.
+      return returnValue(size_t{workGroupProperties.maxGroupSize});
     }
     return returnValue(
-        uint64_t{hDevice->ZeDeviceComputeProperties->maxTotalGroupSize});
+        size_t{hDevice->ZeDeviceComputeProperties->maxTotalGroupSize});
   }
   case UR_KERNEL_GROUP_INFO_COMPILE_WORK_GROUP_SIZE: {
     auto props = hKernel->getProperties(hDevice);
@@ -527,7 +529,7 @@ ur_result_t urKernelGetGroupInfo(
   }
   case UR_KERNEL_GROUP_INFO_LOCAL_MEM_SIZE: {
     auto props = hKernel->getProperties(hDevice);
-    return returnValue(uint32_t{props.localMemSize});
+    return returnValue(size_t{props.localMemSize});
   }
   case UR_KERNEL_GROUP_INFO_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: {
     return returnValue(
@@ -535,7 +537,7 @@ ur_result_t urKernelGetGroupInfo(
   }
   case UR_KERNEL_GROUP_INFO_PRIVATE_MEM_SIZE: {
     auto props = hKernel->getProperties(hDevice);
-    return returnValue(uint32_t{props.privateMemSize});
+    return returnValue(size_t{props.privateMemSize});
   }
   case UR_KERNEL_GROUP_INFO_COMPILE_MAX_WORK_GROUP_SIZE:
   case UR_KERNEL_GROUP_INFO_COMPILE_MAX_LINEAR_WORK_GROUP_SIZE:
@@ -622,5 +624,49 @@ ur_result_t urKernelGetInfo(ur_kernel_handle_t hKernel,
   return UR_RESULT_SUCCESS;
 } catch (...) {
   return exceptionToResult(std::current_exception());
+}
+
+ur_result_t urKernelGetSuggestedLocalWorkSize(
+    ur_kernel_handle_t hKernel, ur_queue_handle_t hQueue, uint32_t workDim,
+    [[maybe_unused]] const size_t *pGlobalWorkOffset,
+    const size_t *pGlobalWorkSize, size_t *pSuggestedLocalWorkSize) {
+  UR_ASSERT(workDim > 0, UR_RESULT_ERROR_INVALID_WORK_DIMENSION);
+  UR_ASSERT(workDim < 4, UR_RESULT_ERROR_INVALID_WORK_DIMENSION);
+  UR_ASSERT(pSuggestedLocalWorkSize != nullptr,
+            UR_RESULT_ERROR_INVALID_NULL_POINTER);
+
+  uint32_t localWorkSize[3];
+  size_t globalWorkSize3D[3]{1, 1, 1};
+  std::copy(pGlobalWorkSize, pGlobalWorkSize + workDim, globalWorkSize3D);
+
+  ur_device_handle_t hDevice;
+  UR_CALL(hQueue->queueGetInfo(UR_QUEUE_INFO_DEVICE, sizeof(hDevice),
+                               reinterpret_cast<void *>(&hDevice), nullptr));
+
+  UR_CALL(getSuggestedLocalWorkSize(hDevice, hKernel->getZeHandle(hDevice),
+                                    globalWorkSize3D, localWorkSize));
+
+  std::copy(localWorkSize, localWorkSize + workDim, pSuggestedLocalWorkSize);
+  return UR_RESULT_SUCCESS;
+}
+
+ur_result_t urKernelSuggestMaxCooperativeGroupCountExp(
+    ur_kernel_handle_t hKernel, ur_device_handle_t hDevice, uint32_t workDim,
+    const size_t *pLocalWorkSize, size_t dynamicSharedMemorySize,
+    uint32_t *pGroupCountRet) {
+  (void)dynamicSharedMemorySize;
+
+  uint32_t wg[3];
+  wg[0] = ur_cast<uint32_t>(pLocalWorkSize[0]);
+  wg[1] = workDim >= 2 ? ur_cast<uint32_t>(pLocalWorkSize[1]) : 1;
+  wg[2] = workDim == 3 ? ur_cast<uint32_t>(pLocalWorkSize[2]) : 1;
+  ZE2UR_CALL(zeKernelSetGroupSize,
+             (hKernel->getZeHandle(hDevice), wg[0], wg[1], wg[2]));
+
+  uint32_t totalGroupCount = 0;
+  ZE2UR_CALL(zeKernelSuggestMaxCooperativeGroupCount,
+             (hKernel->getZeHandle(hDevice), &totalGroupCount));
+  *pGroupCountRet = totalGroupCount;
+  return UR_RESULT_SUCCESS;
 }
 } // namespace ur::level_zero

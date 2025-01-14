@@ -813,12 +813,13 @@ ur_result_t urKernelGetGroupInfo(
                                       (ZeKernelDevice, &kernelProperties));
       if (ZeResult || workGroupProperties.maxGroupSize == 0) {
         return ReturnValue(
-            uint64_t{Device->ZeDeviceComputeProperties->maxTotalGroupSize});
+            size_t{Device->ZeDeviceComputeProperties->maxTotalGroupSize});
       }
-      return ReturnValue(workGroupProperties.maxGroupSize);
+      // Specification states this returns a size_t.
+      return ReturnValue(size_t{workGroupProperties.maxGroupSize});
     } else {
       return ReturnValue(
-          uint64_t{Device->ZeDeviceComputeProperties->maxTotalGroupSize});
+          size_t{Device->ZeDeviceComputeProperties->maxTotalGroupSize});
     }
   }
   case UR_KERNEL_GROUP_INFO_COMPILE_WORK_GROUP_SIZE: {
@@ -830,12 +831,12 @@ ur_result_t urKernelGetGroupInfo(
     return ReturnValue(WgSize);
   }
   case UR_KERNEL_GROUP_INFO_LOCAL_MEM_SIZE:
-    return ReturnValue(uint32_t{Kernel->ZeKernelProperties->localMemSize});
+    return ReturnValue(size_t{Kernel->ZeKernelProperties->localMemSize});
   case UR_KERNEL_GROUP_INFO_PREFERRED_WORK_GROUP_SIZE_MULTIPLE: {
     return ReturnValue(size_t{Device->ZeDeviceProperties->physicalEUSimdWidth});
   }
   case UR_KERNEL_GROUP_INFO_PRIVATE_MEM_SIZE: {
-    return ReturnValue(uint32_t{Kernel->ZeKernelProperties->privateMemSize});
+    return ReturnValue(size_t{Kernel->ZeKernelProperties->privateMemSize});
   }
   case UR_KERNEL_GROUP_INFO_COMPILE_MAX_WORK_GROUP_SIZE:
   case UR_KERNEL_GROUP_INFO_COMPILE_MAX_LINEAR_WORK_GROUP_SIZE:
@@ -1054,8 +1055,9 @@ ur_result_t urKernelGetNativeHandle(
 }
 
 ur_result_t urKernelSuggestMaxCooperativeGroupCountExp(
-    ur_kernel_handle_t hKernel, uint32_t workDim, const size_t *pLocalWorkSize,
-    size_t dynamicSharedMemorySize, uint32_t *pGroupCountRet) {
+    ur_kernel_handle_t hKernel, ur_device_handle_t hDevice, uint32_t workDim,
+    const size_t *pLocalWorkSize, size_t dynamicSharedMemorySize,
+    uint32_t *pGroupCountRet) {
   (void)dynamicSharedMemorySize;
   std::shared_lock<ur_shared_mutex> Guard(hKernel->Mutex);
 
@@ -1066,8 +1068,10 @@ ur_result_t urKernelSuggestMaxCooperativeGroupCountExp(
   ZE2UR_CALL(zeKernelSetGroupSize, (hKernel->ZeKernel, WG[0], WG[1], WG[2]));
 
   uint32_t TotalGroupCount = 0;
+  ze_kernel_handle_t ZeKernel;
+  UR_CALL(getZeKernel(hDevice->ZeDevice, hKernel, &ZeKernel));
   ZE2UR_CALL(zeKernelSuggestMaxCooperativeGroupCount,
-             (hKernel->ZeKernel, &TotalGroupCount));
+             (ZeKernel, &TotalGroupCount));
   *pGroupCountRet = TotalGroupCount;
   return UR_RESULT_SUCCESS;
 }
