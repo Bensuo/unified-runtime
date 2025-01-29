@@ -61,7 +61,7 @@ bool checkImmediateAppendSupport(ur_context_handle_t Context,
     return EnableAppendPath;
   }
 
-  return Device->isPVC() && Device->ImmCommandListUsed &&
+  return Device->ImmCommandListUsed &&
          DriverSupportsImmediateAppend;
 }
 
